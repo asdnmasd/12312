@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>临床分子生物学综合练习系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 禁用移动端双击缩放，提升点击响应速度 */
+        button, .option-btn {
+            touch-action: manipulation;
+        }
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (min-width: 1024px) {
+            .option-btn:hover:not(:disabled) {
+                transform: translateX(6px);
+            }
+        }
+        .correct {
+            background-color: #10b981 !important;
+            color: white !important;
+            border-color: #059669 !important;
+        }
+        .wrong {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        .correct-outline {
+            border-color: #10b981 !important;
+            background-color: #ecfdf5 !important;
+            color: #065f46 !important;
+        }
+        .dark .correct-outline {
+            background-color: #064e3b !important;
+            color: #34d399 !important;
+        }
+        /* 移动端底部抽屉面板动画 */
+        .drawer-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* 填空题输入框样式 */
+        .fill-blank-input {
+            border-bottom: 2px solid #3b82f6;
+            background: transparent;
+            text-align: center;
+            outline: none;
+            width: 150px;
+            padding: 2px 5px;
+            font-weight: bold;
+        }
+        .fill-blank-input:disabled {
+            cursor: not-allowed;
+        }
+        .fill-blank-correct {
+            border-bottom-color: #10b981 !important;
+            color: #10b981 !important;
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+        .fill-blank-wrong {
+            border-bottom-color: #ef4444 !important;
+            color: #ef4444 !important;
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300 flex flex-col selection:bg-blue-500 selection:text-white">
+    
+    <!-- 顶栏导航 -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="max-w-6xl mx-auto px-4 h-14 md:h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2 md:space-x-3">
+                <span class="text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">分子生物自测</span>
+                <span class="px-2 py-0.5 text-[10px] md:text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">234题全收录</span>
+            </div>
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="切换深色模式">
+                    <!-- 太阳图标 -->
+                    <svg id="sun-icon" class="w-4 h-4 md:w-5 md:h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                    <!-- 月亮图标 -->
+                    <svg id="moon-icon" class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+                <button onclick="showWrongBook()" class="px-2 py-1.5 md:px-3 md:py-1.5 rounded-lg border border-red-200 dark:border-red-900 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs md:text-sm font-medium transition flex items-center space-x-1">
+                    <span>错题本</span>
+                    <span id="wrong-count" class="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 px-1.5 py-0.5 rounded-full text-[10px] md:text-xs">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体区域 -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-3 md:p-8 flex flex-col justify-start">
+        
+        <!-- 首页/章节选择 -->
+        <div id="home-screen" class="space-y-6 md:space-y-8 w-full">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl md:rounded-3xl shadow-md p-6 md:p-12 text-center relative overflow-hidden transition">
+                <div class="absolute top-0 right-0 w-48 h-48 md:w-64 md:h-64 bg-blue-100/30 dark:bg-blue-900/10 rounded-full filter blur-3xl -mr-16 -mt-16"></div>
+                <h1 class="text-2xl md:text-4xl font-extrabold text-slate-800 dark:text-white tracking-tight mb-2 md:mb-4">临床分子生物学综合自测系统</h1>
+                <p class="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-xs md:text-sm px-2">本系统已完整录入 10 大章节共 234 道题（含最新增加的 7 道填空自测题），支持手机手势切题、错题攻坚与离线进度保存。</p>
+                
+                <div class="mt-6 md:mt-8 flex justify-center space-x-3 md:space-x-4">
+                    <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl md:rounded-2xl px-4 py-3 md:px-6 md:py-4 border border-slate-100 dark:border-slate-800 min-w-[100px] md:min-w-[120px]">
+                        <div class="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400" id="global-progress">0%</div>
+                        <div class="text-[10px] md:text-xs text-slate-400">总练习进度</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl md:rounded-2xl px-4 py-3 md:px-6 md:py-4 border border-slate-100 dark:border-slate-800 min-w-[100px] md:min-w-[120px]">
+                        <div class="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400" id="global-accuracy">0%</div>
+                        <div class="text-[10px] md:text-xs text-slate-400">平均正确率</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chapter-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <!-- 章节按钮动态加载 -->
+            </div>
+        </div>
+
+        <!-- 答题区域 -->
+        <div id="quiz-screen" class="hidden lg:grid lg:grid-cols-4 gap-6 md:gap-8 flex-grow">
+            <!-- 左侧/答题面板 -->
+            <div class="lg:col-span-3 flex flex-col justify-between space-y-4 md:space-y-6">
+                <div class="flex items-center justify-between">
+                    <button onclick="showHome()" class="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center text-sm md:text-base font-medium transition">
+                        <svg class="w-4 h-4 md:w-5 md:h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        返回首页
+                    </button>
+                    <div class="text-xs md:text-sm font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800" id="progress-text">第 1 / 10 题</div>
+                </div>
+
+                <!-- 题目卡片与滑动手势绑定区 -->
+                <div id="swipe-area" class="bg-white dark:bg-slate-800 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 p-5 md:p-8 flex-grow flex flex-col justify-between transition min-h-[320px] select-none">
+                    <div>
+                        <div id="category-tag" class="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] md:text-xs font-semibold mb-3 md:mb-4">章节名称</div>
+                        <h2 id="question-text" class="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100 leading-relaxed mb-4 md:mb-6">题目正在加载...</h2>
+                    </div>
+                    
+                    <div id="options-container" class="space-y-3 w-full">
+                        <!-- 选项生成 -->
+                    </div>
+                </div>
+
+                <!-- 控制栏 -->
+                <div class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 md:p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <div class="flex flex-col md:flex-row md:items-center md:space-x-2">
+                        <span class="text-[10px] md:text-xs text-slate-400">当前正确率:</span>
+                        <span id="accuracy" class="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300">0%</span>
+                    </div>
+                    <div class="space-x-2 flex">
+                        <button id="prev-btn" onclick="prevQuestion()" class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 transition text-xs md:text-sm font-medium">上一题</button>
+                        <button id="next-btn" onclick="nextQuestion()" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition text-xs md:text-sm font-medium">下一题</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧/桌面端侧边答题卡 -->
+            <div class="hidden lg:block space-y-6">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex justify-between items-center">
+                        <span>答题卡</span>
+                        <span class="text-[10px] font-normal text-slate-400">可快速跳转</span>
+                    </h3>
+                    <div id="answer-card-grid-desktop" class="grid grid-cols-5 gap-2 max-h-[350px] overflow-y-auto pr-2">
+                        <!-- 桌面端题号格 -->
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-center">
+                    <button onclick="finishSection()" class="w-full py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-red-500 hover:text-white rounded-lg text-sm font-bold transition">
+                        结束本章自测
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结算展示 -->
+        <div id="result-screen" class="hidden max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl md:rounded-3xl shadow-md p-6 md:p-12 text-center mt-6 border border-slate-100 dark:border-slate-800 w-full">
+            <div class="w-16 h-16 md:w-20 md:h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                <svg class="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-xl md:text-2xl font-bold mb-2">练习已完成！</h2>
+            <p id="final-score" class="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8">你一共答对了 0 道题。</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="showHome()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 transition font-medium text-sm md:text-base">返回主页</button>
+                <button onclick="retryWrongOnes()" id="retry-wrong-btn" class="border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition font-medium text-sm md:text-base hidden">温习本章错题</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 手机端底栏浮动控制 -->
+    <div id="mobile-fab" class="lg:hidden fixed bottom-6 right-4 z-30 flex flex-col space-y-3">
+        <!-- 提前交卷按钮 -->
+        <button onclick="finishSection()" class="p-3 bg-slate-800/90 dark:bg-slate-700/90 text-white hover:bg-red-500 dark:hover:bg-red-600 rounded-full shadow-lg transition duration-200 flex items-center justify-center border border-slate-700/50" aria-label="交卷">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        </button>
+        <!-- 答题卡抽屉触发按钮 -->
+        <button onclick="toggleMobileDrawer(true)" class="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center border border-blue-500/50" id="fab-drawer-btn">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        </button>
+    </div>
+
+    <!-- 手机端底栏抽屉遮罩 -->
+    <div id="mobile-drawer-overlay" class="lg:hidden fixed inset-0 bg-slate-900/60 z-50 opacity-0 pointer-events-none transition-opacity duration-300" onclick="toggleMobileDrawer(false)">
+        <!-- 抽屉内容 -->
+        <div id="mobile-drawer" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 rounded-t-2xl p-5 max-h-[75vh] flex flex-col drawer-transition transform translate-y-full" onclick="event.stopPropagation()">
+            <!-- 抽屉顶部手柄 -->
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4" onclick="toggleMobileDrawer(false)"></div>
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-base font-bold text-slate-800 dark:text-white">本章答题卡</span>
+                <button onclick="toggleMobileDrawer(false)" class="text-xs text-blue-600 dark:text-blue-400 font-bold">关闭</button>
+            </div>
+            <div id="answer-card-grid-mobile" class="grid grid-cols-5 gap-2.5 overflow-y-auto pr-1 pb-6">
+                <!-- 手机端题号格 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 234道题核心题库配置 (9章选择 + 1章填空)
+        const quizData = [
+            {
+                title: "第一章：基因组与基础知识",
+                questions: [
+                    { q: "质粒的主要成分是", a: ["多糖", "蛋白质", "氨基酸衍生物", "脂类", "DNA 分子"], c: 4 },
+                    { q: "病毒的遗传物质是", a: ["RNA和蛋白质", "DNA和蛋白质", "DNA 或RNA", "RNA和DNA", "DNA"], c: 2 },
+                    { q: "人类可遗传变异中最简单、最常见的一种是", a: ["STR", "CNV", "RFLP", "SNP", "VNTR"], c: 3 },
+                    { q: "在人类基因组1 序列中,DNA甲基化主要发生在", a: ["腺嘌呤的N-6位", "胞嘧啶的N-4位", "胞嘧啶的C-5位", "鸟嘌呤的C-5位", "鸟嘌呤的N-7位"], c: 2 },
+                    { q: "某基因位点正常时表达为精氨酸,突变后为组氨酸,这种突变方式为", a: ["同义突变", "错义突变", "无义突变", "移码突变", "动态突变"], c: 1 },
+                    { q: "原核生物基因组中没有", a: ["内含子", "外显子", "插入序列", "转录因子", "操纵子"], c: 0 },
+                    { q: "下列叙述不正确的是", a: ["F质粒的主要特征是带有耐药性基因", "F和Col E1 质粒可以在同一菌株内稳定共存", "Col 质粒可产生大肠杆菌素", "F 质粒是一种游离基因", "R 质粒又称抗药性质粒"], c: 0 }
+                ]
+            },
+            {
+                title: "第二章：核酸提取与蛋白质纯化",
+                questions: [
+                    { q: "下列说法正确的是", a: ["用于提取核酸的石蜡切片需要先用二甲苯脱蜡", "组织样本不需蛋白酶K消化即可进行核酸提取", "新鲜的组织样本需要先用二甲苯脱蜡才能进行核酸提取", "用于提取核酸的石蜡切片不需脱蜡即可进行核酸提取", "液状石蜡切片中缩短蛋白酶K的消化时间可增加提取DNA片段的长度"], c: 0 },
+                    { q: "用于蛋白质检测的标本长期保存于", a: ["$8^{\\circ}C$", "$4^{\\circ}C$", "$-70^{\\circ}C$", "$-20^{\\circ}C$", "室温"], c: 2 },
+                    { q: "纯DNA的A260/A280比值为1.8,可使比值降低的是", a: ["乙醇", "RNA", "氯仿", "蛋白质", "酚"], c: 3 },
+                    { q: "采用配体的特异性亲和力分离纯化蛋白的方法是", a: ["离子交换层析", "凝胶过滤层析", "亲和层析", "盐析", "离心"], c: 2 },
+                    { q: "提取DNA的原则除外", a: ["排除 RNA分子的污染与干扰", "保证核酸一级结构完整性", "蛋白质、多糖和脂类分子的污染应降低到最低程度", "核酸样品中不应存在有机溶剂 and 过高浓度的金属离子", "保留所有核酸分子"], c: 4 },
+                    { q: "纯DNA的A260/A280比值为1.8,可使比值升高的是", a: ["RNA", "蛋白质", "酚", "乙醇", "氯仿"], c: 0 },
+                    { q: "离子交换层析有效分离蛋白质的依据是", a: ["蛋白的溶解度", "蛋白所带电荷", "配体的特异性亲和力", "蛋白的分子大小", "蛋白的pI"], c: 1 },
+                    { q: "影响 DNA 分离纯化效果的是", a: ["材料新鲜,低温保存", "剧烈振荡", "除净多糖", "加核酸酶抑制剂", "除净蛋白质"], c: 1 },
+                    { q: "下列哪种方法不是根据蛋白分子大小进行蛋白分离纯化的", a: ["超滤", "凝胶过滤层析", "透析", "离心", "离子交换层析"], c: 4 },
+                    { q: "下列说法错误的是", a: ["用于PCR检测的样本可用肝素作为抗凝剂", "如使用血清标本进行检测应尽快分离血清", "用于核酸提取的痰液标本应加入1moLNaOH 初步处理", "外周血单个核细胞可从抗凝全血制备", "用于RNA 检测的样本短期可保存在-20°C"], c: 0 }
+                ]
+            },
+            {
+                title: "第三章：分子杂交与芯片技术",
+                questions: [
+                    { q: "关于人工合成的寡核苷酸探针,下列描述不正确的是", a: ["特异性高", "分子量小", "可用于相似基因顺序差异性分析", "可依赖氨基酸序列推测其序列", "可用末端转移酶进行5'端标记"], c: 4 },
+                    { q: "基因芯片技术的主要步骤不包括", a: ["信号检测", "酶切分析", "杂交反应", "样品制备", "芯片的设计与制备"], c: 1 },
+                    { q: "最常用的DNA探针标记方法是", a: ["随机引物标记", "3'-末端标记", "PCR法", "切口平移标记", "5'-末端标记"], c: 0 },
+                    { q: "关于核酸探针的描述下列不正确的是", a: ["可用非放射性标记", "可用放射性标记", "可以是 DNA", "可以是 RNA", "必须是单链核酸"], c: 4 },
+                    { q: "关于非放射性探针标记,下列描述不正确的是", a: ["对人体危害小", "可长时间使用", "酶促显色检测最常使用的酶是碱性磷酸酶和辣根过氧化物酶", "目前应用的非放射性标志物都是抗原", "灵敏度不如放射性探针"], c: 3 },
+                    { q: "关于电转移下列描述不正确的是", a: ["可产生高温", "常用 NC 膜作为支持介质", "缓冲液用 TAE 或TBE", "快速、高效", "需要特殊设备"], c: 1 },
+                    { q: "荧光原位杂交的描述正确的是", a: ["用于蛋白水平的检测", "用于基因定位分析", "用于阳性菌落的筛选", "检测靶分子是 RNA", "快速确定是否存在目的基因"], c: 1 },
+                    { q: "最容易降解的核酸探针是", a: ["gDNA 探针", "cDNA 探针", "dsDNA 探针", "ssDNA 探针", "RNA"], c: 4 },
+                    { q: "基因芯片技术的临床应用不包括", a: ["疾病的诊断", "指导个体用药", "药物的筛选", "由于蛋白质翻译后修饰改变而引起的疾病的诊断", "基因突变的检测"], c: 3 },
+                    { q: "DNA 探针的长度通常为", a: ["1000~2000个碱基", "100~400个碱基", "<100个碱基", "400~500个碱基", "500~1000个碱基"], c: 3 },
+                    { q: "检测靶分子是DNA的技术是", a: ["Eastern 印迹杂交", "Western 印迹杂交", "Northern 印迹杂交", "Southern 印迹杂交", "杂交淋巴瘤"], c: 3 },
+                    { q: "DNA 芯片的样品制备过程错误的是", a: ["常用的标志物为荧光", "样品的扩增", "标记后的样品不必再纯化", "核酸分子的纯化", "样品的标记"], c: 2 },
+                    { q: "关于DNA 变性的描述不正确的是", a: ["浮力密度增加", "二级结构破坏", "黏度降低", "一级结构破坏", "生物活性丧失"], c: 3 },
+                    { q: "基因芯片原位合成的描述错误的是", a: ["适用于制作大规模 DNA 探针芯片", "也称为离片合成", "直接在芯片上用四种核苷酸合成所需探针", "可实现高密度芯片的标准化 and 规模化生产", "适用于寡核苷酸探针"], c: 1 },
+                    { q: "DNA 链的 Tm 值主要取决于核酸分子的", a: ["A-C含量", "A-G 含量", "G-C含量", "A-T 含量", "TG 含量"], c: 2 },
+                    { q: "寡核苷量探针的最大优势是", a: ["易合成型", "杂化分子稳定", "易标记", "易分解", "可以区分仅仅一个碱基差别的靶序列"], c: 4 },
+                    { q: "以等位基因特异的寡核苷酸探针杂交法诊断某常染色体隐性遗传病时,若能与突变探针及正常探针接合,则该样本为", a: ["纯合体患者", "正常人", "杂合体患者", "携带者", "不能确定"], c: 3 },
+                    { q: "生物芯片根据芯片上固定的探针种类不同可分为几种,其中不包括", a: ["蛋白质芯片", "测序芯片", "组织芯片", "DNA 芯片", "细胞芯片"], c: 1 },
+                    { q: "Southern 杂交通常是指", a: ["DNA 和 DNA 杂交", "蛋白质和蛋白质杂交", "DNA和蛋白质杂交", "DNA 和 RNA 杂交", "RNA 和RNA 杂交"], c: 0 },
+                    { q: "Southern 印迹杂交的描述正确的是", a: ["不仅可以检测 DNA 样品中是否存在特定基因,还可以获得片段大小信息", "检测靶分子是RNA", "用于阳性菌落的筛选", "用于基因定位分析", "用于蛋白水平的检测"], c: 0 },
+                    { q: "关于DNA 芯片描述不正确的是", a: ["有序地高密度地固定于支持物上", "理论基础是核酸杂交", "可研究基因序列", "不能研究基因功能", "探针为已知序列"], c: 3 },
+                    { q: "DNA 芯片的固相载体不可以用", a: ["半导体硅片", "硝酸纤维素膜", "尼龙膜", "滤纸", "玻璃片"], c: 3 },
+                    { q: "检测靶分子是RNA的技术是", a: ["Southern 印迹杂交", "杂交淋巴瘤", "Western 印迹杂交", "Eastern 印迹杂交", "Northern 印迹杂交"], c: 4 },
+                    { q: "下列有关 cDNA 探针的描述不正确的为", a: ["cDNA 探针合成方便,成为探针的重要来源", "利用 mRNA 通过 RT-PCR 在体外反转录可制备大量的cDNA 探针", "cDNA 探针不包含大量的高度重复序列", "由于 cDNA 探针自身所携带的poly(dT),有可能产生非特异性杂交的问题", "cDNA 探针不包含内含子"], c: 0 },
+                    { q: "作为芯片固相载体的材料描述正确是", a: ["这些载体材料不需要处理,其表面存在活性基团", "可以直接固定已经合成的寡核苷酸探针", "不需要对介质表面进行化学预处理", "主要有玻片、硅片等实性材料", "不使用硝酸纤维素膜、尼龙膜及聚丙烯膜等膜性材料"], c: 3 },
+                    { q: "探针基因芯片技术的本质就是", a: ["酶切技术", "蛋白质分子杂交技术", "基因重组技术", "聚合酶链反应技术", "核酸分子杂交技术"], c: 4 }
+                ]
+            },
+            {
+                title: "第四章：PCR扩增技术",
+                questions: [
+                    { q: "关于分子信标技术的描述,不正确的是", a: ["分子信标设计简单", "背景信号低", "操作简便", "特异性强", "灵敏度高"], c: 0 },
+                    { q: "有关多重PCR的描述正确的是", a: ["相同的引物,多种不同的模板", "同一反应内各扩增产物片段的大小应尽可能相同或接近", "同一个模板,多种不同的引物", "多个模板,多种引物", "引物的Tm值、反应时间和温度、反应缓冲液等尽量不一致以区分不同产物"], c: 2 },
+                    { q: "关于PCR-RFLP 错误的是", a: ["需先进行PCR", "突变位点不必在限制酶识别序列中", "采用特定的限制性内切酶对PCR产物进行处理", "对酶切后的片段长度进行分析", "判断有无点突变"], c: 1 },
+                    { q: "数字PCR的核心定量方式是", a: ["基于单分子计数绝对定量", "基于Ct值定量", "基于产物亮度定量", "基于核酸吸光度定量", "基于标准曲线相对定量"], c: 0 },
+                    { q: "关于Ct值的描述,不正确的是", a: ["Ct越小代表其模板核酸拷贝数越多", "Ct值处于扩增曲线和荧光本底基线的交叉点", "Ct与反应模板的初始模板量成正比", "Ct值是荧光定量PCR 获得的最初数据资料", "Ct代表了反应达到预定设置的阈值时的循环次数"], c: 2 },
+                    { q: "自动样本处理系统的组成是", a: ["进样模块+扩增模块", "提取模块+分析模块", "核酸提取模块+扩增模块", "自动进样模块+样本预处理模块", "扩增模块+结果分析模块"], c: 3 },
+                    { q: "环介导等温扩增技术(LAMP)识别靶基因的特定区域数量为", a: ["2个", "3个", "6个", "5个", "4个"], c: 2 },
+                    { q: "PCR反应中延伸的时间取决于", a: ["模板的含量", "引物长度", "模板的纯度", "待扩增片段的长度", "Taq DNA 聚合酶的量"], c: 3 },
+                    { q: "属于探针序列扩增的是", a: ["SSCP", "RT-PCR", "连接酶链反应", "变性梯度凝胶电泳", "分支 DNA"], c: 2 },
+                    { q: "关于 TaqMan 探针技术的描述,不正确的是", a: ["R基团与Q基团相距较远,灭不彻底,本底较高", "解决了荧光染料技术非特异的缺点", "易受到 Taq DNA 聚合酶 5'→3'核酸外切酶活性的影响", "不需要进行寡核苷酸熔解曲线分析,减少了实验时间", "操作亦比较简单"], c: 4 },
+                    { q: "关于定量PCR的描述,不正确的是", a: ["分子信标在自由状态下为发夹结构,荧光信号极低", "可以定量或半定量检测 PCR产物的方法", "定量PCR 在封闭状态下进行,有效避免了产物的实验室污染", "水解探针技术中 TaqMan 探针的位置位于两条引物之间", "定量PCR 主要进行基因表达的分析和病原体的核酸检测"], c: 1 },
+                    { q: "目前核酸自动化提取系统常用的技术原理不包括", a: ["二氧化硅基质法", "硅胶膜吸附法", "酚抽提法", "磁珠法", "阴离子交换法"], c: 3 },
+                    { q: "临床基因扩增检验技术人员必须", a: ["有检验技师证即可", "无需专业培训", "仅需掌握基础实验技能", "有医师资格证", "经专项培训并取得合格证书"], c: 4 },
+                    { q: "以mRNA 为模板合成 cDNA的酶是", a: ["逆转录酶", "Taq DNA 聚合酶", "限制性内切酶", "RNA 酶", "DNA 酶"], c: 0 },
+                    { q: "PCR的变性温度一般为", a: ["25°C", "94-95°C", "55°C左右", "75~80°C", "72°C"], c: 1 },
+                    { q: "环介导等温扩增技术(LAMP)设计的特异性引物数量为", a: ["4种", "5种", "6种", "2种", "3种"], c: 0 },
+                    { q: "下列属于分析前质量控制内容的是", a: ["标本采集、运送与保存", "结果报告", "产物分析", "核酸扩增检测", "室内质控检测"], c: 0 },
+                    { q: "有关 PCR的描述下列不正确的是", a: ["是一种酶促反应", "循环次数越多产物量就越大,可增加循环次数提高产物量", "引物决定了扩增的特异性", "由变性、退火、延伸组成一个循环", "扩增的对象是DNA序列"], c: 1 },
+                    { q: "关于内参基因的描述,不正确的是", a: ["实验中的干预因素对内参基因表达没有影响", "在待测样本中的表达是稳定的", "通常选用内源性的管家基因作为内参基因,如GAPDH", "能与待测目的基因同时进行相同 PCR扩增数", "任何管家基因都适合任何实时荧光定量PCR 实验"], c: 4 },
+                    { q: "室间质量评价(EQA)的作用是", a: ["回顾性评价实验室结果准确性", "保证单次检测无误差", "完全替代室内质量控制", "每日监控检测质量", "实时判断样本结果是否可接受"], c: 0 },
+                    { q: "不能作为PCR 模板的是", a: ["cDNA", "质粒DNA", "DNA", "RNA", "蛋白质"], c: 4 },
+                    { q: "以下不需要对引物或探针预先标记的实时定量PCR方法是", a: ["分子信标技术", "数字PCR技术", "SYBR Green I荧光染料技术", "TaqMan 水解探针技术", "探杂交技术"], c: 2 },
+                    { q: "下列关于引物设计的原则中,错误的是", a: ["两条引物的Tm值相差尽量大", "5'端可加修饰基团", "尽量避免引物二聚体的出现", "反应体系中引物的浓度一般在0.1~0.2µmol/L之间", "G+C的含量应在45%~55%之间"], c: 0 },
+                    { q: "室内质量控制(IQC)的核心目的是", a: ["评价实验室间结果可比性", "保证所有样本结果绝对准确", "替代室间质量评价", "监控单次检测的精密度", "校准仪器设备"], c: 3 },
+                    { q: "连接酶链反应的描述错误的是", a: ["一对引物在模板上的位置是紧密相连的", "需要 DNA 聚合酶", "靶DNA序列已知", "产物是被连接起来的引物", "属于探针序列扩增"], c: 1 },
+                    { q: "下列不属于数字PCR优势的是", a: ["耐受抑制剂能力强", "样本需求量低", "系统成本低、操作简单", "适合稀有变异检测", "绝对定量"], c: 2 },
+                    { q: "可同时扩增多个核酸片段的技术是", a: ["逆转录 PCR", "长片段 PCR", "PCR", "转录依赖扩增系统", "多重 PCR"], c: 4 },
+                    { q: "关于等温扩增技术的核心特点,下列说法错误的是", a: ["全程在单一恒定温度下进行", "适用于简易实验条件", "反应快速、成本较低", "无需热循环设备", "必须经过 95°C高温变性步骤"], c: 4 },
+                    { q: "决定 PCR反应特异性的是", a: ["模板", "缓冲液", "dNTP", "引物", "Taq DNA 聚合酶"], c: 3 },
+                    { q: "巢式 PCR 错误的是", a: ["第二次扩增所用的模板为第一次扩增的产物", "第二对引物在靶序列上的位置应设计在第一对引物的外侧", "巢式 PCR 可提高反应的灵敏度和特异性", "常用于靶基因的质 and 或者是量较低时", "是对靶 DNA 进行二次扩增"], c: 1 },
+                    { q: "数字 PCR 的检测灵敏度主要取决于", a: ["扩增效率", "模板纯度", "退火温度", "引物浓度", "反应单元总数"], c: 4 },
+                    { q: "以下为荧光染料技术的优点，不正确的是", a: ["特极性高", "不需要进行凝胶分离等二次处理 PCR 产物，避免污染", "适合任何一个反应体系", "荧光信号的检测在每一次循环延伸后，简单方便", "荧光信号量与 PCR 反应产物量成正比，可以实时监测"], c: 0 },
+                    { q: "核酸序列依赖性扩增(NASBA)的主要产物是", a: ["单链 RNA", "双链 DNA", "cDNA", "双链 RNA", "单链 DNA"], c: 0 },
+                    { q: "PCR 反应体系的描述错误的是", a: ["缓冲液", "dNTP", "模板", "一条引物", "DNA 聚合酶"], c: 3 },
+                    { q: "荧光定量 PCR 检测核酸量的时间段在", a: ["指数期的终末阶段", "PCR 反应最后的时间段", "指数期的起始阶段", "非指数期", "PCR 反应的最初阶段"], c: 2 },
+                    { q: "属于水解探针的是", a: ["molecular beacon", "FRET", "TaqMan 探针", "TAMRA", "SYBR Green ER"], c: 2 },
+                    { q: "PCR 的退火温度一般为", a: ["94~95℃", "55℃左右", "75~80℃", "72℃", "25℃"], c: 1 },
+                    { q: "关于逆转录 PCR 的描述,不正确的是", a: ["除了使用 DNA 聚合酶外,还应使用逆转录酶", "首先应将 RNA 转化为 cDNA 才能进行 PCR", "模板为 RNA", "逆转录酶不需要引物进行逆转录反应", "oligo-d(T)理论上可以将所有的 mRNA 进行逆转录反应"], c: 3 },
+                    { q: "当标本核酸量非常低难以扩增时,可采用的 PCR 技术是", a: ["原位 PCR", "荧光 PCR", "逆转录 PCR", "转录介导扩增", "巢式 PCR"], c: 4 },
+                    { q: "限制性片段长度多态性是", a: ["SSCP", "RT-PCR", "RFLP", "ASO", "bDNA"], c: 2 },
+                    { q: "关于多重 PCR,错误的是", a: ["在同一反应体系中加入多对引物", "同时扩增一份 DNA 样品的靶 DNA", "扩增的产物为序列相同的 DNA 片段", "扩增产物可以通过电泳分离", "扩增时应注意各对引物之间的扩增效率基本一致"], c: 2 },
+                    { q: "属于靶序列扩增的是", a: ["分支 DNA", "RT-PCR", "连接酶链反应", "SSCP", "变性梯度凝胶电泳"], c: 1 },
+                    { q: "以下为比较 Ct 法的相对定量的描述,不正确的是", a: ["不需要再对管家基因和目的基因做标准曲线", "没有考虑 PCR 扩增效率对定量结果的影响", "运用了数学公式来计算相对量", "使机体的不同组织，以及不同实验处理组之间的基因表达变化具有可比性", "实验条件不需要严格优化"], c: 4 },
+                    { q: "PCR 的延伸温度一般为", a: ["55℃左右", "94~95℃", "25℃", "72℃", "75~80℃"], c: 3 },
+                    { q: "下列关于 Taq DNA 聚合酶的描述,错误的是", a: ["不具有 3'-5'外切酶活性", "使 DNA 链沿 5'→3' 方向延伸", "催化形成 3',5’-磷酸二酯键", "以 dNTPs 为原料", "扩增的 DNA 片段越长,碱基错配率越低"], c: 4 },
+                    { q: "聚合酶链式反应是一种", a: ["体外特异复制 DNA 的过程", "体内特异复制 DNA 的过程", "体外特异转录 DNA 的过程", "体外特异转录 RNA 的过程", "体外翻译蛋白质的过程"], c: 0 },
+                    { q: "数字 PCR 的基本步骤不包括", a: ["温度梯度循环", "有限稀释", "单分子分隔", "荧光信号分析", "PCR 扩增"], c: 0 },
+                    { q: "PCR 扩增仪根据变温方式分类不包括", a: ["变温气流式", "辐射加热式", "变温金属块式", "微流控芯片式", "水浴式"], c: 3 },
+                    { q: "关于连接酶链反应正确的是", a: ["引物在模板上的位置不能紧密相连", "属于靶序列扩增", "不能用来检测 DNA 点突变", "不需预知靶 DNA 的序列", "DNA 连接酶代替 DNA 聚合酶"], c: 4 },
+                    { q: "属于荧光染料技术的是", a: ["TAMRA", "FRET", "TaqMan 探针", "SYBR Green ER", "molecular beacon"], c: 3 },
+                    { q: "自动化核酸检测系统不包括", a: ["核酸自动化提取系统", "全自动核酸检测一体机", "PCR 扩增仪", "自动样本处理系统", "蛋白电泳仪"], c: 4 },
+                    { q: "PCR 中的脱氧核苷三磷酸不包括", a: ["dATP", "dUTP", "dGTP", "dTTP", "dCTP"], c: 1 },
+                    { q: "关于 PCR 反应引物的描述,不正确的是", a: ["引物中 G+C 的含量占 45%~55%", "引物的 3'端可以带有生物素、荧光或酶切位点等作为标记", "引物自身或引物之间不应存在互补序列,防止产生二聚体和发夹结构", "两条引物的 Tm 值应该尽量相近", "引物的长度在 20~30bp"], c: 1 },
+                    { q: "微滴式数字 PCR 将模板分隔在何种体系中", a: ["384 孔板", "96 孔板", "微流控芯片微孔", "水包油微滴", "油包水微滴"], c: 4 }
+                ]
+            },
+            {
+                title: "第五章：第一代与高通量测序技术",
+                questions: [
+                    { q: "第一代 DNA 测序技术的核心技术 is", a: ["荧光标记技术", "PCR 技术", "DNA 自动分析技术", "Sanger 的双脱氧链终止法", "Maxam 和 Gilbert 的化学降解法"], c: 3 },
+                    { q: "Sanger 双脱氧链终止法使用的链终止物是", a: ["NTP", "ddNTP", "α-35S-dNTP", "α-32P-dNTP", "dNTP"], c: 1 },
+                    { q: "对长度＜1kb 的已知 DNA 片段进行验证，最常用的测序策略是", a: ["全基因组测序", "引物步移法", "鸟枪法", "宏基因组测序", "确证性测序"], c: 4 },
+                    { q: "临床用于无需预知病原类型、直接鉴定感染病原体的测序技术是", a: ["转录组测序", "全基因组测序", "靶向 tNGS", "全外显子测序", "宏基因组 mNGS"], c: 4 },
+                    { q: "Sanger 测序读取序列的方向是", a: ["从凝胶底部到顶部，3′→5′", "从凝胶顶部到底部，5′→3′", "从凝胶顶部到底部，3′→5′", "从凝胶底部到顶部，5′→3′", "随机读取"], c: 1 },
+                    { q: "以下哪种测序读长较短(30~35bp)，但准确性较高", a: ["边合成边测序", "ONT 测序", "边连接边测序", "SMRT 测序", "Sanger 测序"], c: 2 },
+                    { q: "不适用于直接作为第一代测序技术测序的 DNA 模板是", a: ["单链 DNA 片段", "克隆于真核载体的 DNA 片段", "双链 DNA 片段和 PCR 产物", "提取的染色质 DNA", "克隆于质粒载体的 DNA 片段"], c: 3 },
+                    { q: "边合成边测序技术所使用的底物是", a: ["荧光标记 dNTP", "荧光标记 ddNTP", "放射性标记 dNTP", "未标记 ddNTP", "未标记 dNTP"], c: 0 },
+                    { q: "第一代 DNA 测序技术中，Sanger 双脱氧链终止法的核心终止物质是", a: ["ddNTP", "dNTP", "测序引物", "DNA 聚合酶", "琼脂糖"], c: 0 },
+                    { q: "仅仅进行核酸-核酸查询,一般选择使用的 BLAST 方式是", a: ["TBLASTx", "BLASTP", "BLASTn", "TBLASTn", "BLASTx"], c: 2 },
+                    { q: "目前测序读长最大的测序反应是", a: ["寡连测序", "焦磷酸测序", "化学裂解法", "双脱氧终止法", "边合成边测序"], c: 3 },
+                    { q: "用于描述基因突变、插入缺失等变异信息的文件格式是", a: ["VCF", "BAM", "FASTQ", "FASTA", "SAM"], c: 0 },
+                    { q: "NCBI 的 Primer-BLAST 工具主要用于", a: ["突变注释", "数据质控", "序列比对", "引物设计与特异性验证", "序列拼接"], c: 3 },
+                    { q: "第三代测序技术最核心的特征是", a: ["读长简短", "通量低", "需要 PCR 扩增", "单分子非 PCR 测序", "依赖凝胶电泳"], c: 3 },
+                    { q: "高通量测序原始数据的标准存储格式是", a: ["SAM", "FASTA", "VCF", "BAM", "FASTQ"], c: 4 },
+                    { q: "Sanger 测序中，用于制备高纯度单链模板的常用载体是", a: ["BAC", "质粒载体", "YAC", "M13mp", "pUC18"], c: 3 },
+                    { q: "用于过滤单核苷酸多态性(SNP)的数据库是", a: ["UCSC", "GenBank", "HomoloGene", "Ensembl", "dbSNP"], c: 4 },
+                    { q: "高通量测序(NGS)又称为", a: ["化学降解测序", "毛细管测序", "双脱氧链终止测序", "大规模平行测序", "单分子测序"], c: 3 },
+                    { q: "双脱氧链终止法测序反应体系中，不包含以下哪种成分", a: ["测序引物", "荧光 / 放射性标记物", "RNA 酶", "DNA 聚合酶", "单链 DNA 模板"], c: 2 },
+                    { q: "关于 Sanger 双脱氧链终止法叙述错误的是", a: ["高分辨率变性聚丙烯酰胺凝胶电泳可分离仅差一个核苷酸的单链 DNA", "链终止物缺少 3'-OH,使链终止", "测序反应结果是产生 4组不同长度的核苷酸链", "需引入双脱氧核苷三磷酸(ddTNP)作为链终止物", "每个 DNA 模板需进行一个独立的测序反应"], c: 4 },
+                    { q: "核酸序列查询蛋白质数据库的 BLAST 程序是", a: ["Blastx", "Blastn", "Tblastx", "Blastp", "Tblastn"], c: 0 }
+                ]
+            },
+            {
+                title: "第六章：蛋白质与代谢组学分析",
+                questions: [
+                    { q: "用来检测具有生物活性的蛋白质的是", a: ["2-DE", "Western blotting", "SDS-PAGE", "IEF", "native PAGE"], c: 4 },
+                    { q: "下列引入基质小分子的是哪一种质谱分析方法", a: ["ESI-MS", "MALDI", "TOF", "FAB", "ESI"], c: 1 },
+                    { q: "能够以凝聚电泳为基础进行定量检测的表达蛋白质组学研究方法是", a: ["荧光差异显示双向电泳", "毛细管电泳", "电喷雾质谱分析", "反向液相色谱分析", "双向凝胶电泳"], c: 4 },
+                    { q: "蛋白质染色中哪种方法易造成蛋白质末端封闭,不利于蛋白质序列分析", a: ["银染", "荧光染色", "考马斯亮蓝染色", "铜染", "放射性核素标记染色技术"], c: 0 },
+                    { q: "下列哪种蛋白质染色方法会出现“雪崩效应”", a: ["考马斯亮蓝染色", "胶体考马斯亮蓝染色", "SYPRO Ruby", "SYPRO Orange", "银染色"], c: 4 },
+                    { q: "临床靶向蛋白质组学最常用的体液样本是", a: ["淋巴液和关节液", "血液和尿液", "唾液和汗液", "组织液和脑脊液", "羊水和胸水"], c: 1 },
+                    { q: "非靶向代谢组学的核心特点是", a: ["重复性好、选择性高", "仅用于验证已知生物标志物", "定性定量数百种已知代谢物", "分析全部代谢物，假设生成实验", "针对特定代谢物，假设驱动实验"], c: 3 },
+                    { q: "靶向代谢组学的别称是", a: ["发现阶段实验", "假设驱动实验", "广泛靶向实验", "假设生成实验", "无假设实验"], c: 1 },
+                    { q: "通过电喷雾将蛋白质离子化的是", a: ["ICAT", "ESI-MS", "MALDI-TOF-MS", "MDLC", "PMF"], c: 1 },
+                    { q: "SDS-PAGE 聚丙烯酰胺凝胶电泳具有", a: ["电渗效应", "分子筛效应", "浓缩效应", "稀释效应", "电荷效应"], c: 1 },
+                    { q: "质谱技术是将样品分子离子化后,根据什么的差异来确定样品分子量", a: ["电荷", "质量", "吸光度", "质荷比", "序列长短"], c: 3 },
+                    { q: "SDS 是一种阴离子表面活性剂,其可断开蛋白质分子内和分子间的", a: ["二硫键", "离子键", "疏水键", "酯键", "氢键"], c: 4 },
+                    { q: "以下哪种技术是糖基化蛋白质组学的理想方法", a: ["SDS-PAGE 凝胶电泳", "多维液相色谱 - 串联质谱技术", "考马斯亮蓝染色法", "双向凝胶电泳(2-DE)", "普通 PCR 扩增技术"], c: 1 },
+                    { q: "下列哪种蛋白质染色方法灵敏度最高", a: ["SYPRO Orange", "银染色", "考马斯亮蓝染色", "质谱兼容的银染色", "胶体考马斯亮蓝染色"], c: 1 },
+                    { q: "为了保持蛋白质不被蛋白酶水解,常需加入一些蛋白酶抑制剂如", a: ["PMSF", "DTT", "硫脲", "尿素", "核酸酶"], c: 0 },
+                    { q: "SDS-PAGE 电泳消除或掩盖了不同种类蛋白质间的", a: ["电荷差异", "氢键差异", "分子大小差异", "离子键差异", "疏水性差异"], c: 0 },
+                    { q: "以下不属于蛋白质芯片按检测方法分型的是", a: ["生物化学芯片", "化学型芯片", "糖蛋白质芯片", "以上均属于", "生物反应器芯片"], c: 2 },
+                    { q: "IEF 电泳具有", a: ["电渗效应", "浓缩效应", "稀释效应", "分子筛效应", "电荷效应"], c: 4 },
+                    { q: "使用飞行时间质谱质量分析器的是", a: ["MDLC", "ICAT", "MALDI-TOF-MS", "PMF", "ESI-MS"], c: 2 },
+                    { q: "糖蛋白质组学的核心研究对象是", a: ["体液中的小分子代谢物", "高丰度血浆蛋白的分离鉴定", "细胞内所有蛋白质的氨基酸序列", "蛋白质的磷酸化修饰位点", "生物体内所有聚糖的结构与功能"], c: 4 },
+                    { q: "SDS-聚丙烯酰胺凝胶电泳的原理不正确的是", a: ["SDS-PAGE 使具有不同等电点的蛋白质得以分离", "SDS 与蛋白质结合后可以屏蔽天然蛋白质的电荷", "SDS 可以与蛋白质的疏水部分相结合,从而使蛋白质获得负电荷", "SDS 是一种阴离子去污剂", "SDS-PAGE 时蛋白质的迁移率与分子大小相关"], c: 0 },
+                    { q: "下列不是 MALDI-MS 特点的是", a: ["质量的准确度高", "对样品要求很高", "质量检测范围宽(已超过 300kD)", "样品量只需 1pmol 甚至更少", "分析速度快,分子离子峰强,信息直观"], c: 1 },
+                    { q: "蛋白质芯片在疾病研究中的主要作用不包括", a: ["直接测定基因序列突变", "分析病理状态下蛋白质表达调控", "疾病分子机制研究", "疾病分子水平诊断", "高通量筛选特异性抗原抗体"], c: 0 },
+                    { q: "代谢组学的研究对象是", a: ["生物体内的基因组 DNA", "生物体内的低分子量内源性代谢物", "生物体内的所有蛋白质", "生物体内的多糖和脂质大分子", "生物体内的 mRNA 转录本"], c: 1 },
+                    { q: "蛋白质磷酸化修饰的形成机制是", a: ["氨基酸残基与氨基共价连接", "蛋白质折叠形成空间构象", "蛋白质分子间形成二硫键", "氨基酸残基与磷酸基团共价连接", "氨基酸残基与糖基共价连接"], c: 3 },
+                    { q: "最能直接反映生命现象的是", a: ["糖类", "基因组", "蛋白质组", "mRNA 水平", "脂类"], c: 2 }
+                ]
+            },
+            {
+                title: "第七章：病原体分子生物学检测",
+                questions: [
+                    { q: "判断 HBV 复制及传染性的直接指标是检测", a: ["HBcAg", "HBV DNA", "HBV DNA 多聚酶活力", "HBsAg", "HBeAg"], c: 1 },
+                    { q: "HIV 的 gp120主要功能是", a: ["介导病毒基因组整合", "介导膜融合", "调控蛋白", "与细胞 CD4分子结合", "逆转录酶功能"], c: 3 },
+                    { q: "HBV DNA 中最小的一个开放阅读框是", a: ["C 基因区", "P 基因区", "X 基因区", "S 基因区", "前 S 基因区"], c: 2 },
+                    { q: "感染综合征分子生物学检验的主流技术是", a: ["血清抗体检测", "生化鉴定", "病毒分离培养", "药敏试验", "多重 PCR 与微流控技术"], c: 4 },
+                    { q: "流感病毒分型的主要依据是", a: ["膜蛋白 M2", "核蛋白和基质蛋白", "非结构蛋白 NS", "聚合酶蛋白", "血凝素和神经氨酸酶"], c: 4 },
+                    { q: "编码 HIV 衣壳蛋白的是", a: ["env 基因", "pol 基因", "gag 基因", "vif 基因", "tat 基因"], c: 2 },
+                    { q: "腹泻综合征的核心表现不包括", a: ["大便性状改变", "腹痛、呕吐", "皮肤出疹", "每日排便≥3 次", "可伴脱水"], c: 2 },
+                    { q: "结核分枝杆菌利福平耐药的主要相关基因是", a: ["rpoB", "katG", "gyrA", "rrs", "embB"], c: 0 },
+                    { q: "HIV-1 中最易发生变异的基因是", a: ["tat", "env", "nef", "gag", "pol"], c: 1 },
+                    { q: "下列哪项不是高通量测序的适应证", a: ["明确诊断的普通上呼吸道感染", "疑似新发病原体", "经验抗感染治疗无效", "免疫低下患者不明原因感染", "急危重症疑似感染"], c: 0 },
+                    { q: "目前已知感染人类最小的 DNA 病毒是", a: ["HBV", "HCV", "HPV", "HIV", "HAV"], c: 0 },
+                    { q: "HIV 最易发生变异的部位是", a: ["包膜蛋白", "逆转录酶", "刺突蛋白", "内膜蛋白", "核衣壳蛋白"], c: 2 },
+                    { q: "结核分枝杆菌基因组的 GC 含量约为", a: ["75%-80%", "50%-55%", "65%-68%", "85%-90%", "40%-45%"], c: 2 },
+                    { q: "关于 mNGS 与 tNGS，说法正确的是", a: ["tNGS 适合所有感染场景", "两者均只能检测 DNA 病原体", "tNGS 无需引物扩增", "mNGS 需要先扩增特定靶基因", "mNGS 适合未知病原体检测"], c: 4 },
+                    { q: "脑炎脑膜炎综合征(EMS)病原体诊断的 “金标准” 是", a: ["PCR", "基因芯片", "血清学检测", "脑脊液培养", "涂片镜检"], c: 3 },
+                    { q: "HBV DNA 中最大的一个开放阅读框是", a: ["P 基因区", "S 基因区", "前 S1基因区", "C 基因区", "X 基因区"], c: 0 },
+                    { q: "水痘属于下列哪种感染综合征", a: ["发热伴出疹综合征", "腹泻综合征", "发热伴出血综合征", "发热呼吸道综合征", "脑炎脑膜炎综合征"], c: 0 },
+                    { q: "与宫颈癌发生最密切相关的 HPV 型别是", a: ["HPV31、33 型", "HPV6、11 型", "HPV42、43 型", "HPV16、18 型", "HPV52、58 型"], c: 3 },
+                    { q: "细菌天然耐药的特点是", a: ["由基因突变导致", "由抗生素诱导产生", "可在菌株间传播", "细菌种属固有、可预测", "仅见于革兰氏阳性菌"], c: 3 },
+                    { q: "HIV 核酸类型是", a: ["单链 RNA", "单链 DNA", "单正链 RNA 双聚体", "单负链 RNA", "双链 DNA"], c: 2 },
+                    { q: "16S rRNA 主要用于鉴定哪类病原体", a: ["病毒", "衣原体", "细菌", "真菌", "寄生虫"], c: 2 },
+                    { q: "乙型肝炎病毒的核酸类型是", a: ["双链环状 DNA", "双链线性 DNA", "单链 DNA", "单链 RNA", "双链 RNA"], c: 0 },
+                    { q: "HIV 结构具有 CD4分子受体的部位是", a: ["刺突", "核酸", "包膜", "衣壳", "内膜"], c: 0 },
+                    { q: "编码 HIV 包膜 gp120 的基因是", a: ["pol 基因", "gag 基因", "E6 基因", "env 基因", "LTR"], c: 3 },
+                    { q: "靶向测序(tNGS)主要用于", a: ["已知病原体鉴定、分型与耐药检测", "仅检测真菌", "替代所有传统检测", "新发未知病原体检测", "全基因组无差别测序"], c: 0 },
+                    { q: "第一代测序鉴定细菌最常用的靶序列是", a: ["16S rRNA", "5S rRNA", "18S rRNA", "ITS", "28S rRNA"], c: 0 },
+                    { q: "发热呼吸道综合征最常见的病原体是", a: ["支原体", "病毒", "真菌", "寄生虫", "细菌"], c: 1 }
+                ]
+            },
+            {
+                title: "第八章：单基因遗传病与产前分子诊断",
+                questions: [
+                    { q: "下列关于人类遗传病的叙述不正确的是", a: ["人类遗传病包括单基因遗传病、多基因遗传病和染色体异常遗传病", "人类遗传病是指由于遗传物质改变而引起的疾病", "遗传性疾病既可以直接诊断,也可以间接诊断", "单基因病是指受一个基因控制的疾病", "21-三体综合征患者体细胞中染色体数目为 47 条"], c: 3 },
+                    { q: "不符合分子诊断特点的是", a: ["易于早期诊断", "检测对象为自体基因", "特异性强", "灵敏度高", "样品获取便利"], c: 1 },
+                    { q: "遗传病的最基本特征是", a: ["遗传物质发生了改变", "先天性", "患儿发病的家族性", "酶的缺陷", "染色体畸变"], c: 0 },
+                    { q: "关于单基因遗传病的叙述,正确的是", a: ["在群体中发病率高", "可进行定性诊断 and 定量诊断", "发病机制都已阐明", "受多对等位基因控制", "原发性高血压是单基因遗传病"], c: 1 },
+                    { q: "下列属于单基因遗传病的是", a: ["精神与神经疾病", "原发性高血压", "珠蛋白生成障碍性贫血", "冠心病", "糖尿病"], c: 2 },
+                    { q: "新生儿筛查主要针对哪类遗传病", a: ["基因组微缺失综合征", "Y 连锁遗传病", "动态突变疾病", "遗传性代谢病", "染色体结构病"], c: 3 },
+                    { q: "在如下情况时,可考虑通过基因连锁分析进行分子生物学检验", a: ["基因表达异常", "基因插入", "基因结构变化未知", "基因点突变", "基因缺失"], c: 2 },
+                    { q: "珠蛋白生成障碍性贫血的主要原因是", a: ["铁代谢异常", "血红蛋白破坏加速", "珠蛋白基因突变导致氨基酸序列改变", "珠蛋白链合成速率降低", "出现异常血红蛋白 S"], c: 3 },
+                    { q: "基因突变中动态突变的主要变化形式是", a: ["染色体片段缺失", "染色体整倍体改变", "单个碱基替换", "重复序列拷贝数增加", "染色体易位"], c: 3 },
+                    { q: "限制性长度多态性是由于以下哪项所致", a: ["碱基变化发生在酶切位点上", "碱基变化发生在外显子", "碱基变化发生在内含子", "碱基变化发生在增强子上", "碱基变化发生在微卫星序列上"], c: 0 },
+                    { q: "引起镰状细胞贫血的珠蛋白基因突变类型是", a: ["终止密码突变", "整码突变", "无义突变", "错义突变", "移码突变"], c: 3 },
+                    { q: "以下属于创伤性产前诊断技术的是", a: ["超声检查", "胎儿细胞无创检测", "母体血清标志物检测", "羊膜腔穿刺", "母体外周血胎儿游离 DNA 检测"], c: 3 },
+                    { q: "下列不属于单基因遗传病产前诊断常用方法的是", a: ["全基因组扩增", "PCR-SSCP", "巢式 PCR", "Western blot", "多重 PCR"], c: 3 },
+                    { q: "正常成人主要的血红蛋白类型是", a: ["HbF(\\(\\alpha_2\\gamma_2\\))", "Hb Barts", "HbH", "HbA2(\\(\\alpha_2\\delta_2\\))", "HbA(\\(\\alpha_2\\beta_2\\))"], c: 4 },
+                    { q: "单基因遗传病分子诊断的主要应用是", a: ["携带者筛选", "产前诊断", "症状前诊断", "耐药基因检测", "携带者诊断"], c: 1 },
+                    { q: "染色体结构异常不包括以下哪种类型", a: ["三体型", "重复", "缺失", "易位", "倒位"], c: 0 },
+                    { q: "结构基因突变不包括", a: ["基因点突变", "基因扩增", "基因表达异常", "基因缺失", "基因重排"], c: 2 },
+                    { q: "胎儿水肿综合征的基因型特点是", a: ["4 个 \\(\\alpha\\) 珠蛋白基因全部缺失", "缺失 3 个 \\(\\alpha\\) 基因", "非缺失型点突变", "缺失 2 个 \\(\\alpha\\) 基因", "缺失 1 个 \\(\\alpha\\) 基因"], c: 0 },
+                    { q: "Down 综合征属于", a: ["基因组病", "单基因显性遗传病", "染色体结构异常", "染色体数目非整倍异常", "单基因隐性遗传病"], c: 3 },
+                    { q: "绝大多数\\(\\beta\\)-地中海贫血中的\\(\\beta\\)-珠蛋白基因位于", a: ["16 号染色体", "11 号染色体", "X 染色体", "9 号染色体", "18号染色体"], c: 1 },
+                    { q: "绝大多数\\(\\beta\\)-地中海贫血系由位于第 11 号染色体上的\\(\\beta\\)-珠蛋白基因中的基因突变所致，下列方法中不能用于分子生物学检验的技术是", a: ["PCR-RDB", "MOEA-PCR", "基因芯片", "多重 PCR", "PCR-ASO"], c: 3 },
+                    { q: "基因诊断对下列哪些疾病最具有确切的临床诊断意义", a: ["单基因遗传病", "畸形", "肿瘤", "多基因遗传病", "染色体疾病"], c: 0 },
+                    { q: "单基因遗传病直接诊断的核心是", a: ["无创产前筛查", "直接检测致病基因本身的异常", "分析遗传多态性评估患病风险", "全基因组关联分析", "分析家系系谱判断遗传方式"], c: 1 },
+                    { q: "镰状细胞贫血患者,代替其血红蛋白\\(\\beta\\)链N端第六个氨基酸残基谷氨酸的是", a: ["酪氨酸", "苯丙氨酸", "丝氨酸", "缬氨酸", "丙氨酸"], c: 3 },
+                    { q: "检测镰状细胞贫血最常用的分子生物学技术是", a: ["甲基化特异性 PCR", "全基因组测序", "胎儿镜检测", "gap-PCR", "限制性酶谱分析"], c: 4 },
+                    { q: "地中海贫血的致病机制为", a: ["凝血因子Ⅷ缺乏", "珠蛋白生成障碍", "FMR-1基因突变", "凝血因子Ⅸ缺乏", "肝脏中缺失苯丙氨酸羟化酶(PAH)"], c: 1 },
+                    { q: "人类的\\(\\alpha\\)-珠蛋白基因定位于", a: ["X 染色体", "18 号染色体", "9 号染色体", "16 号染色体", "11号染色体"], c: 3 },
+                    { q: "珠蛋白基因的碱基由 G 突变为 C 时,造成的突变称为", a: ["融合基因", "移码突变", "密码子缺失或插入", "片段缺失", "单个碱基置换"], c: 4 },
+                    { q: "单基因遗传病间接诊断的实质是", a: ["原位杂交定位基因", "基因芯片检测突变", "限制性酶切分析突变", "连锁分析 + 多态性标记评估患病风险", "直接测序检测突变位点"], c: 3 },
+                    { q: "下列有关遗传病的叙述中正确的是", a: ["先天性疾病都是遗传病", "遗传病一定是先天性疾病", "遗传病都是由基因突变引起的", "遗传病是指由遗传物质改变而引起的疾病", "遗传病只能诊断不能治疗"], c: 3 },
+                    { q: "单基因遗传病诊断最重要的前提是", a: ["疾病表型与基因关系已阐明", "了解相关基因的染色体定位", "了解患者的家族史", "进行个体的基因分型", "了解相关基因的基因克隆和功能分析等知识"], c: 0 },
+                    { q: "基因诊断间接方法不包括", a: ["基于 SNP 的单倍型分析", "RFLP 连锁分析", "Southern blot", "PCR-RFLP", "基于 STR 的微卫星分析"], c: 2 },
+                    { q: "目前诊断 \\(\\beta\\) 地中海贫血诊断率最高分子技术是", a: ["普通 PCR", "SSCP", "染色体核型分析", "FISH", "PCR-RDB"], c: 4 }
+                ]
+            },
+            {
+                title: "第九章：肿瘤分子生物学检测",
+                questions: [
+                    { q: "关于 K-ras 说法不正确的是", a: ["80%~90%的突变是由第 12 密码子 A→T 引起的", "20%~30%的 NSCLC 患者存在 K-ras 基因突变", "K-ras 突变与 EGFR 突变是相互排斥的", "伴随 K-ras 突变的 NSCLC 患者 EGFR-TKIs 药物敏感性较差", "K-ras 与肺癌的发生及预后有关"], c: 0 },
+                    { q: "常用的肺癌远处转移检测标志物是", a: ["EGFR 基因", "CEA", "TPA", "TTF-1", "K-ras"], c: 1 },
+                    { q: "对于 BRCA 基因突变的检测,以下最常用的方法是", a: ["单链构象多态性分析", "变性高效液相色谱法", "直接 DNA 序列测定", "变性梯度凝销电泳", "异源双链分析"], c: 2 },
+                    { q: "p53 基因定位于人哪个染色体上", a: ["17q20", "11q24", "11q13", "12p13", "17p13"], c: 4 },
+                    { q: "关于 P450 的说法不正确的是", a: ["具有广泛作用底物的一个酶类", "P450 在致癌化合物代谢方面起着重要的作用", "在肺癌中研究最多的是 CYP1A2 这个多态位点", "绝大多数化学致癌物包括内源性和外源性都需经过 P450 的生物转化激活", "细胞色谱 P450 超家族有多个亚家族"], c: 2 },
+                    { q: "关于 BRCA1 基因说法正确的是", a: ["编码含 1840 个氨基酸的蛋白质", "BRCA1 基因的突变使高危家族人群患乳腺癌的危险性比一般人降低 8~10倍", "是一种 DNA 结合蛋白", "是一种原癌基因,其激活可促进肿瘤的形成", "位于人染色体 2p32 上"], c: 2 },
+                    { q: "肺癌的分子生物学检验的意义不包括", a: ["可以减轻肺癌患者化疗的不良反应", "帮助降低肺癌患者的病死率", "有利于肺癌的早期诊断", "可以对肺癌患者的预后作出评估", "可以较早的发现微小转移的癌灶"], c: 0 },
+                    { q: "目前确认与人类肿瘤发生有关 of RNA 病毒是", a: ["丙型肝炎病毒", "乙型肝炎病毒", "人类癌症病毒-8", "EB 病毒", "人乳头状瘤病毒"], c: 0 },
+                    { q: "以下不是原癌基因的特点的是", a: ["在进化过程中,基因序列呈高度保守性", "对正常细胞不仅无害,而且是细胞发育、组织再生、创伤愈合等所必需", "通过表达产物 DNA 来实现功能", "广泛存在于生物界,是细胞生长必不可少的", "在某些因素的作用下会形成能够致瘤的癌基因"], c: 2 },
+                    { q: "关于抑癌基因的说法正确的是", a: ["可以使细胞丧失生长控制和正性调控功能", "正常情况下促进细胞增殖、抑制细胞分化", "呈隐性作用方式", "是一类可编码对肿瘤形成起促进作用的蛋白质的基因", "抑癌基因又称为肿瘤分化抑制基因"], c: 2 },
+                    { q: "首个被证实和克隆的乳腺癌易感基因", a: ["p53", "BRCA2", "c-erbB-2/HER2", "ATM", "BRCA1"], c: 4 },
+                    { q: "著名的 Ph1 染色体发生的易位是", a: ["t(5; 11)(q34; q22)", "t(9;21)(q33;q11)", "t(9;22)(q34;q11)", "t(9;22)(q11; g34)", "t(5; 22)(q34; q11)"], c: 2 },
+                    { q: "关于 c-erbB-2/HER2 基因说法不正确的是", a: ["是乳腺细胞中较常见、易激活的原癌基因", "其扩增或过度表达在癌细胞 and 正常乳腺上皮细胞中均存在", "过度表达者生存期缩短,预后不良", "HER2 强阳性表达可作为识别早期乳腺癌的有效指标", "HER2 表达与乳腺癌的复发、转移及生存期明显相关"], c: 1 },
+                    { q: "关于 p53 基因说法不正确的是", a: ["定位于人染色体 17q13 上", "属于抑癌基因", "编码蛋白为转录因子 p53 蛋白,与调控细胞生长周期等有关", "可单独作为乳腺癌预后的分子标志", "在进化过程中高度保守"], c: 0 },
+                    { q: "是雌激素诱导蛋白的是", a: ["c-myc 基因", "PS2", "BRCA2", "BRCA1", "c-erbB-2/HER2 基因"], c: 1 },
+                    { q: "K-ras 基因最常见的激活方式是", a: ["染色体重排", "插入突变", "点突变", "基因扩增", "缺失突变"], c: 2 },
+                    { q: "目前所知的原癌基因激活机制不包括", a: ["原癌基因扩增", "抑癌基因的丢失", "癌基因甲基化程度降低", "点突变", "异位激活"], c: 1 },
+                    { q: "乳腺癌分子生物学检测的意义不包括", a: ["筛选易感人群", "帮助减轻化疗的不良反应", "预测早期乳腺癌复发、转移的风险", "反映肿瘤的生物学行为", "筛选适合内分泌、化疗及靶向治疗的患者"], c: 1 },
+                    { q: "肿瘤细胞表观遗传学异常的主要分子机制不包括", a: ["RNA 突变", "染色质重塑", "组蛋白修饰", "基因组印记丢失", "DNA 甲基化"], c: 0 },
+                    { q: "目前对肺癌遗传易感性的主要研究不包括", a: ["代谢酶的基因多态性", "RNA 修复能力", "某些基因的突变或缺失", "对诱变剂的敏感性", "DNA 修复能力"], c: 1 },
+                    { q: "以下关于原癌基因说法不正确的是", a: ["普遍存在于人类或其他动物细胞基因组中的一类基因", "在生物进化过程中不稳定", "容易在多种因素作用下激活成活性形式的癌基因", "活性形式 of 癌基因才引起细胞癌变", "在控制细胞生长和分化中起重要作用"], c: 1 },
+                    { q: "关于肿瘤分子诊断的说法正确的是", a: ["虽然检测对象众多,但大多数标志物是特异性的肿瘤标志物", "研究成果仅用于临床肿瘤的诊断", "核心是基于细胞水平的分子诊断技术", "就是利用分子生物学原理和技术建立的肿瘤诊断方法", "要采取完全相似的诊断策略与方法"], c: 3 },
+                    { q: "BRCA1 基因定位于人哪个染色体上", a: ["染色体 11q24", "染色体 17q21", "染色体 2p32", "染色体 1p32", "染色体 9p21"], c: 1 }
+                ]
+            },
+            {
+                title: "第十章：填空自测题",
+                isFill: true, // 标记为填空章节
+                questions: [
+                    { 
+                        q: "1. 分子生物标志物可以分为 <input type='text' class='fill-blank-input' data-idx='0'>、<input type='text' class='fill-blank-input' data-idx='1'> 和代谢产物生物标志物等。", 
+                        answers: [
+                            ["核酸分子", "核酸", "核酸生物标志物"],
+                            ["蛋白质", "蛋白质生物标志物", "蛋白"]
+                        ]
+                    },
+                    { 
+                        q: "2. 若根据来源分类,生物标志物可以分为 <input type='text' class='fill-blank-input' data-idx='0'>、<input type='text' class='fill-blank-input' data-idx='1'> 和 <input type='text' class='fill-blank-input' data-idx='2'> 等。", 
+                        answers: [
+                            ["来自生物样本", "生物样本", "生物学样本"],
+                            ["记录值", "记录", "日常检测记录"],
+                            ["影像学检查", "影像学", "影像检查"]
+                        ]
+                    },
+                    { 
+                        q: "3. 点突变也称为碱基置换,是指单个碱基的改变,在引起人类遗传性疾病的点突变中包括 <input type='text' class='fill-blank-input' data-idx='0'>、<input type='text' class='fill-blank-input' data-idx='1'>、<input type='text' class='fill-blank-input' data-idx='2'> 以及发生在调控区的突变等。", 
+                        answers: [
+                            ["错义突变"],
+                            ["无义突变"],
+                            ["RNA加工突变", "RNA 剪接突变", "RNA剪接突变", "RNA加工"]
+                        ]
+                    },
+                    { 
+                        q: "4. 质粒可编码细菌多种重要的生物学性状,根据其所携带基因功能的不同将质粒分为 <input type='text' class='fill-blank-input' data-idx='0'>、<input type='text' class='fill-blank-input' data-idx='1'>、<input type='text' class='fill-blank-input' data-idx='2'> 等几类。", 
+                        answers: [
+                            ["R质粒", "R 质粒", "抗药性质粒"],
+                            ["F质粒", "F 质粒", "致育质粒", "致育因子"],
+                            ["Col质粒", "Col 质粒", "大肠杆菌素质粒"]
+                        ]
+                    },
+                    { 
+                        q: "5. 人类基因组中的 DNA 多态性有多种形式,主要包括: <input type='text' class='fill-blank-input' data-idx='0'>、<input type='text' class='fill-blank-input' data-idx='1'>、<input type='text' class='fill-blank-input' data-idx='2'> 以及拷贝数多态性等。", 
+                        answers: [
+                            ["限制性片段长度多态性", "RFLP"],
+                            ["小卫星和微卫星多态性", "STR/VNTR", "STR", "VNTR", "微卫星多态性"],
+                            ["单核苷酸多态性", "SNP", "SNPs"]
+                        ]
+                    },
+                    { 
+                        q: "6. 核酸的最大紫外吸收波长在 <input type='text' class='fill-blank-input' data-idx='0'>，蛋白质的最大吸收波长在 <input type='text' class='fill-blank-input' data-idx='1'>，<input type='text' class='fill-blank-input' data-idx='2'> 的最大吸收波长在盐和小分子。", 
+                        answers: [
+                            ["260nm", "260 nm", "260"],
+                            ["280nm", "280 nm", "280"],
+                            ["230nm", "230 nm", "230"]
+                        ]
+                    },
+                    { 
+                        q: "7. <input type='text' class='fill-blank-input' data-idx='0'> 是目前提取基因组DNA的经典方法。", 
+                        answers: [
+                            ["酚-氯仿抽提法", "酚/氯仿抽提法", "酚氯仿抽提法", "酚-氯仿法", "酚/氯仿法", "酚氯仿法"]
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // 运行时状态变量
+        let currentChapter = 0;
+        let currentIdx = 0;
+        let score = 0;
+        let userAnswers = []; // 用于存放当前章节的用户答题结果
+        let wrongBook = []; // 格式：[{chIdx, qIdx}]
+        let isWrongBookMode = false;
+
+        // 手势相关变量
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        // 初始化加载数据
+        function init() {
+            // 读取本地存储中的错题本和进度
+            try {
+                const storedWrongs = localStorage.getItem('mol_bio_wrongs');
+                if (storedWrongs) {
+                    wrongBook = JSON.parse(storedWrongs);
+                    updateWrongCount();
+                }
+            } catch (e) {
+                console.error("无法加载历史错题记录");
+            }
+
+            renderChapterList();
+            updateGlobalStats();
+            detectTheme();
+            setupGestureDetection();
+        }
+
+        // 绑定手势切换
+        function setupGestureDetection() {
+            const swipeArea = document.getElementById('swipe-area');
+            
+            swipeArea.addEventListener('touchstart', (e) => {
+                // 仅单指滑动触发，避免干扰输入法
+                if (e.touches.length === 1 && e.target.tagName !== 'INPUT') {
+                    touchStartX = e.touches[0].screenX;
+                } else {
+                    touchStartX = 0;
+                }
+            }, { passive: true });
+
+            swipeArea.addEventListener('touchend', (e) => {
+                if (e.changedTouches.length === 1 && touchStartX !== 0) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipeGesture();
+                }
+            }, { passive: true });
+        }
+
+        function handleSwipeGesture() {
+            const swipeThreshold = 65; // 滑动检测灵敏度
+            if (touchStartX - touchEndX > swipeThreshold) {
+                // 向左滑 -> 下一题
+                nextQuestion();
+            } else if (touchEndX - touchStartX > swipeThreshold) {
+                // 向右滑 -> 上一题
+                prevQuestion();
+            }
+        }
+
+        // 检查用户答案是否正确 (多同义词模糊检测)
+        function isUserAnswerCorrect(chIdx, qIdx, ans) {
+            if (ans === null || ans === undefined) return false;
+            const ch = quizData[chIdx];
+            const qData = ch.questions[qIdx];
+            if (ch.isFill) {
+                // 填空题：ans 为输入文本数组
+                if (!Array.isArray(ans)) return false;
+                return ans.every((userVal, idx) => {
+                    const syns = qData.answers[idx];
+                    return syns.some(syn => syn.toLowerCase() === (userVal || '').trim().toLowerCase());
+                });
+            } else {
+                // 选择题：ans 为正确索引数字
+                return ans === qData.c;
+            }
+        }
+
+        // 手机端底部抽屉显示与隐藏
+        function toggleMobileDrawer(show) {
+            const overlay = document.getElementById('mobile-drawer-overlay');
+            const drawer = document.getElementById('mobile-drawer');
+            
+            if (show) {
+                overlay.classList.remove('pointer-events-none', 'opacity-0');
+                overlay.classList.add('opacity-100');
+                drawer.classList.remove('translate-y-full');
+            } else {
+                overlay.classList.add('opacity-0');
+                drawer.classList.add('translate-y-full');
+                setTimeout(() => {
+                    overlay.classList.add('pointer-events-none');
+                }, 300);
+            }
+        }
+
+        // 暗黑模式切换
+        function detectTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('sun-icon').classList.remove('hidden');
+                document.getElementById('moon-icon').classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('sun-icon').classList.add('hidden');
+                document.getElementById('moon-icon').classList.remove('hidden');
+            }
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('sun-icon').classList.add('hidden');
+                document.getElementById('moon-icon').classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('sun-icon').classList.remove('hidden');
+                document.getElementById('moon-icon').classList.add('hidden');
+            }
+        }
+
+        // 更新全局统计信息
+        function updateGlobalStats() {
+            let totalQuestions = 0;
+            let answeredQuestions = 0;
+            let correctAnswers = 0;
+
+            quizData.forEach((ch, chIdx) => {
+                totalQuestions += ch.questions.length;
+                const progressKey = `mol_bio_ch_${chIdx}_progress`;
+                const progressData = localStorage.getItem(progressKey);
+                if (progressData) {
+                    try {
+                        const parsed = JSON.parse(progressData); // {userAns: [...]}
+                        parsed.userAns.forEach((ans, qIdx) => {
+                            if (ans !== null) {
+                                answeredQuestions++;
+                                if (isUserAnswerCorrect(chIdx, qIdx, ans)) {
+                                    correctAnswers++;
+                                }
+                            }
+                        });
+                    } catch (e) {}
+                }
+            });
+
+            const progressPct = totalQuestions === 0 ? 0 : Math.round((answeredQuestions / totalQuestions) * 100);
+            const accuracyPct = answeredQuestions === 0 ? 0 : Math.round((correctAnswers / answeredQuestions) * 100);
+
+            document.getElementById('global-progress').innerText = `${progressPct}%`;
+            document.getElementById('global-accuracy').innerText = `${accuracyPct}%`;
+        }
+
+        // 渲染首页章节卡片
+        function renderChapterList() {
+            const list = document.getElementById('chapter-list');
+            list.innerHTML = '';
+
+            quizData.forEach((ch, index) => {
+                // 读取历史进度
+                let completedCount = 0;
+                let chAccuracy = 0;
+                let totalChQ = ch.questions.length;
+                const progressKey = `mol_bio_ch_${index}_progress`;
+                const progressData = localStorage.getItem(progressKey);
+                if (progressData) {
+                    try {
+                        const parsed = JSON.parse(progressData);
+                        completedCount = parsed.userAns.filter(a => a !== null).length;
+                        let chCorrect = 0;
+                        parsed.userAns.forEach((ans, qI) => {
+                            if (ans !== null && isUserAnswerCorrect(index, qI, ans)) chCorrect++;
+                        });
+                        chAccuracy = completedCount === 0 ? 0 : Math.round((chCorrect / completedCount) * 100);
+                    } catch (e) {}
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-750 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between group";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-full">Chapter 0${index + 1}</span>
+                            <span class="text-[10px] text-slate-400">${completedCount}/${totalChQ} 已答</span>
+                        </div>
+                        <h3 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">${ch.title}</h3>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-1 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: ${(completedCount/totalChQ)*100}%"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-50 dark:border-slate-700 flex justify-between items-center">
+                        <span class="text-[10px] text-slate-400">正确率：<strong class="text-slate-700 dark:text-slate-300">${chAccuracy}%</strong></span>
+                        <button onclick="startQuiz(${index})" class="px-3.5 py-1.5 bg-blue-600 text-white hover:bg-blue-700 text-[10px] md:text-xs font-bold rounded-lg shadow-sm transition">开始自测</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // 开始练习
+        function startQuiz(chIndex) {
+            isWrongBookMode = false;
+            currentChapter = chIndex;
+            currentIdx = 0;
+            score = 0;
+
+            const total = quizData[chIndex].questions.length;
+            userAnswers = new Array(total).fill(null);
+
+            // 恢复历史暂存进度
+            const progressKey = `mol_bio_ch_${chIndex}_progress`;
+            const progressData = localStorage.getItem(progressKey);
+            if (progressData) {
+                try {
+                    const parsed = JSON.parse(progressData);
+                    userAnswers = parsed.userAns;
+                    // 修正目前得分
+                    score = 0;
+                    userAnswers.forEach((ans, idx) => {
+                        if (isUserAnswerCorrect(chIndex, idx, ans)) score++;
+                    });
+                } catch(e) {}
+            }
+
+            switchScreen('quiz-screen');
+            renderQuestion();
+            renderAnswerCard();
+            updateStats();
+        }
+
+        // 渲染单个题目 (包含填空题和选择题逻辑)
+        function renderQuestion() {
+            let qData, qTitleText, totalQuestions;
+            const isCurrentFill = isWrongBookMode ? quizData[wrongBook[currentIdx].chIdx].isFill : quizData[currentChapter].isFill;
+
+            if (isWrongBookMode) {
+                if (wrongBook.length === 0) {
+                    showHome();
+                    return;
+                }
+                const wrongItem = wrongBook[currentIdx];
+                qData = quizData[wrongItem.chIdx].questions[wrongItem.qIdx];
+                qTitleText = qData.q;
+                totalQuestions = wrongBook.length;
+                document.getElementById('category-tag').innerText = `错题本模式 / ${quizData[wrongItem.chIdx].title}`;
+            } else {
+                const chapter = quizData[currentChapter];
+                qData = chapter.questions[currentIdx];
+                qTitleText = qData.q;
+                totalQuestions = chapter.questions.length;
+                document.getElementById('category-tag').innerText = chapter.title;
+            }
+
+            document.getElementById('progress-text').innerText = `第 ${currentIdx + 1} / ${totalQuestions} 题`;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            if (isCurrentFill) {
+                // --- 填空题渲染逻辑 ---
+                document.getElementById('question-text').innerHTML = `请在空格中输入正确的实验学名或数值：<br><br><div class="leading-loose">${qTitleText}</div>`;
+                const currentSelected = isWrongBookMode ? null : userAnswers[currentIdx];
+
+                // 渲染渲染后的 input 的专属属性
+                const inputs = document.querySelectorAll('.fill-blank-input');
+                inputs.forEach(input => {
+                    const idx = parseInt(input.getAttribute('data-idx'));
+                    input.className = "fill-blank-input border-b-2 border-blue-500 dark:border-blue-400 bg-slate-50 dark:bg-slate-700/50 text-center outline-none px-2 py-1 mx-1 font-bold rounded-t-md transition-colors duration-200 w-44 inline-block focus:border-blue-600 focus:bg-blue-50/50 dark:focus:bg-slate-800 text-slate-800 dark:text-slate-100";
+                    
+                    if (currentSelected !== null) {
+                        input.value = currentSelected[idx] || '';
+                        input.disabled = true;
+                        
+                        // 核查并添加红绿标记样式
+                        const userVal = (currentSelected[idx] || '').trim();
+                        const isCorrect = qData.answers[idx].some(syn => syn.toLowerCase() === userVal.toLowerCase());
+                        if (isCorrect) {
+                            input.classList.add('fill-blank-correct', 'text-green-600', 'dark:text-green-400');
+                        } else {
+                            input.classList.add('fill-blank-wrong', 'text-red-600', 'dark:text-red-400');
+                        }
+                    } else {
+                        input.placeholder = "点击输入作答";
+                    }
+                });
+
+                if (currentSelected === null) {
+                    // 未答状态下提供“确认回答”按钮
+                    const submitBtn = document.createElement('button');
+                    submitBtn.className = "w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all duration-150 mt-4";
+                    submitBtn.innerText = "确认回答";
+                    submitBtn.onclick = () => submitFillAnswer(inputs, qData);
+                    container.appendChild(submitBtn);
+                } else {
+                    // 已答状态下直接在下方提示标准答案
+                    const answerBox = document.createElement('div');
+                    answerBox.className = "p-4 bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 rounded-xl text-sm space-y-2 mt-4";
+                    let correctHtml = `<div class="font-bold text-slate-500 dark:text-slate-400 mb-1">💡 参考标准答案：</div>`;
+                    qData.answers.forEach((ansList, idx) => {
+                        correctHtml += `<div>空 ${idx + 1}：<span class="text-green-600 dark:text-green-400 font-bold">${ansList[0]}</span></div>`;
+                    });
+                    answerBox.innerHTML = correctHtml;
+                    container.appendChild(answerBox);
+                }
+
+            } else {
+                // --- 选择题渲染逻辑 ---
+                document.getElementById('question-text').innerHTML = qTitleText;
+                const alphabet = ['A', 'B', 'C', 'D', 'E'];
+                const currentSelected = isWrongBookMode ? null : userAnswers[currentIdx];
+
+                qData.a.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn w-full text-left p-3.5 md:p-4 border border-slate-200 dark:border-slate-700/60 rounded-xl transition-all duration-150 flex items-start bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm md:text-base font-medium";
+                    btn.innerHTML = `<span class="font-bold mr-3 text-slate-400 select-none">${alphabet[i]}.</span> <div class="flex-1">${opt}</div>`;
+
+                    if (currentSelected !== null) {
+                        btn.disabled = true;
+                        if (i === qData.c) {
+                            btn.classList.add('correct');
+                        } else if (i === currentSelected) {
+                            btn.classList.add('wrong');
+                        }
+                    } else {
+                        btn.onclick = () => selectOption(i);
+                    }
+                    container.appendChild(btn);
+                });
+            }
+
+            // 控制上一题下一题按钮状态
+            document.getElementById('prev-btn').disabled = currentIdx === 0;
+            document.getElementById('next-btn').innerText = (currentIdx === totalQuestions - 1) ? '查看结果' : '下一题';
+
+            // 更新左下角正确率
+            updateStats();
+
+            // 触发 MathJax 重新渲染
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        // 提交填空题作答
+        function submitFillAnswer(inputs, qData) {
+            const answers = [];
+            let allCorrect = true;
+
+            inputs.forEach(input => {
+                const idx = parseInt(input.getAttribute('data-idx'));
+                const userVal = input.value.trim();
+                answers.push(userVal);
+
+                // 判断填入是否能与标准同义词匹配
+                const isCorrect = qData.answers[idx].some(syn => syn.toLowerCase() === userVal.toLowerCase());
+                if (!isCorrect) allCorrect = false;
+            });
+
+            if (isWrongBookMode) {
+                const wrongItem = wrongBook[currentIdx];
+                // 实时展示输入反馈
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    const idx = parseInt(input.getAttribute('data-idx'));
+                    const userVal = input.value.trim();
+                    const isCorrect = qData.answers[idx].some(syn => syn.toLowerCase() === userVal.toLowerCase());
+                    if (isCorrect) {
+                        input.classList.add('fill-blank-correct', 'text-green-600', 'dark:text-green-400');
+                    } else {
+                        input.classList.add('fill-blank-wrong', 'text-red-600', 'dark:text-red-400');
+                    }
+                });
+
+                if (allCorrect) {
+                    wrongBook.splice(currentIdx, 1);
+                    localStorage.setItem('mol_bio_wrongs', JSON.stringify(wrongBook));
+                    updateWrongCount();
+                }
+
+                setTimeout(() => {
+                    if (wrongBook.length === 0) {
+                        alert("恭喜！所有错题已清空！");
+                        showHome();
+                    } else {
+                        if (currentIdx >= wrongBook.length) currentIdx = wrongBook.length - 1;
+                        renderQuestion();
+                    }
+                }, 1200);
+
+            } else {
+                userAnswers[currentIdx] = answers;
+
+                if (allCorrect) {
+                    score++;
+                } else {
+                    addWrong(currentChapter, currentIdx);
+                }
+
+                const progressKey = `mol_bio_ch_${currentChapter}_progress`;
+                localStorage.setItem(progressKey, JSON.stringify({ userAns: userAnswers }));
+
+                renderQuestion();
+                renderAnswerCard();
+
+                if (currentIdx < quizData[currentChapter].questions.length - 1) {
+                    setTimeout(nextQuestion, 1200);
+                }
+            }
+        }
+
+        // 用户选择选择题选项
+        function selectOption(optIndex) {
+            if (isWrongBookMode) return; // 错题本不走快速选择逻辑
+
+            const qData = quizData[currentChapter].questions[currentIdx];
+            userAnswers[currentIdx] = optIndex;
+
+            if (optIndex === qData.c) {
+                score++;
+            } else {
+                addWrong(currentChapter, currentIdx);
+            }
+
+            // 保存当前章节练习进度到本地存储
+            const progressKey = `mol_bio_ch_${currentChapter}_progress`;
+            localStorage.setItem(progressKey, JSON.stringify({ userAns: userAnswers }));
+
+            renderQuestion();
+            renderAnswerCard();
+
+            // 自动跳下一题（延迟 800ms）
+            if (currentIdx < quizData[currentChapter].questions.length - 1) {
+                setTimeout(nextQuestion, 800);
+            }
+        }
+
+        // 答题卡渲染（兼容桌面端与手机端抽屉）
+        function renderAnswerCard() {
+            if (isWrongBookMode) return; // 错题本不展示静态答题卡
+
+            const total = quizData[currentChapter].questions.length;
+            
+            const makeCardButton = (i) => {
+                const cell = document.createElement('button');
+                cell.className = "w-full py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center border ";
+                cell.innerText = i + 1;
+
+                if (userAnswers[i] !== null) {
+                    if (isUserAnswerCorrect(currentChapter, i, userAnswers[i])) {
+                        cell.className += "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800";
+                    } else {
+                        cell.className += "bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800";
+                    }
+                } else {
+                    cell.className += "bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
+                }
+
+                if (i === currentIdx) {
+                    cell.className += " ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900";
+                }
+
+                cell.onclick = () => {
+                    currentIdx = i;
+                    renderQuestion();
+                    renderAnswerCard();
+                    toggleMobileDrawer(false); // 在手机上点按后自动收起抽屉
+                };
+                return cell;
+            };
+
+            // 1. 渲染桌面端答题卡
+            const gridDesktop = document.getElementById('answer-card-grid-desktop');
+            gridDesktop.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                gridDesktop.appendChild(makeCardButton(i));
+            }
+
+            // 2. 渲染手机端底栏答题卡
+            const gridMobile = document.getElementById('answer-card-grid-mobile');
+            gridMobile.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                gridMobile.appendChild(makeCardButton(i));
+            }
+        }
+
+        // 添加错题
+        function addWrong(chIdx, qIdx) {
+            const exists = wrongBook.some(item => item.chIdx === chIdx && item.qIdx === qIdx);
+            if (!exists) {
+                wrongBook.push({ chIdx, qIdx });
+                localStorage.setItem('mol_bio_wrongs', JSON.stringify(wrongBook));
+                updateWrongCount();
+            }
+        }
+
+        // 更新错题红点
+        function updateWrongCount() {
+            document.getElementById('wrong-count').innerText = wrongBook.length;
+        }
+
+        // 错题自测启动
+        function showWrongBook() {
+            if (wrongBook.length === 0) {
+                alert("错题本为空！太棒了！");
+                return;
+            }
+            isWrongBookMode = true;
+            currentIdx = 0;
+            switchScreen('quiz-screen');
+            renderQuestion();
+            document.getElementById('answer-card-grid-desktop').innerHTML = '<div class="col-span-5 text-center text-xs text-slate-400 py-4">错题练习模式下答题卡不适用</div>';
+        }
+
+        // 下一题 / 上一题
+        function nextQuestion() {
+            const total = isWrongBookMode ? wrongBook.length : quizData[currentChapter].questions.length;
+            if (currentIdx < total - 1) {
+                currentIdx++;
+                renderQuestion();
+                renderAnswerCard();
+            } else {
+                showResult();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                renderQuestion();
+                renderAnswerCard();
+            }
+        }
+
+        // 正确率及统计更新
+        function updateStats() {
+            const total = isWrongBookMode ? wrongBook.length : quizData[currentChapter].questions.length;
+            const answeredCount = isWrongBookMode ? 0 : userAnswers.filter(a => a !== null).length;
+            
+            let rightCount = 0;
+            if (!isWrongBookMode) {
+                userAnswers.forEach((ans, idx) => {
+                    if (ans !== null && isUserAnswerCorrect(currentChapter, idx, ans)) rightCount++;
+                });
+            }
+            
+            const currentAccuracy = answeredCount === 0 ? 0 : Math.round((rightCount / answeredCount) * 100);
+            document.getElementById('accuracy').innerText = `${currentAccuracy}%（${rightCount}/${answeredCount}）`;
+        }
+
+        // 强制提前结束自测
+        function finishSection() {
+            if (confirm("确定要结束本章的自测并交卷吗？")) {
+                showResult();
+            }
+        }
+
+        // 结算画面
+        function showResult() {
+            toggleMobileDrawer(false);
+            switchScreen('result-screen');
+            
+            if (isWrongBookMode) {
+                document.getElementById('final-score').innerText = `错题重温练习结束！错题本剩余 ${wrongBook.length} 道错题。`;
+                document.getElementById('retry-wrong-btn').classList.add('hidden');
+                return;
+            }
+
+            const total = quizData[currentChapter].questions.length;
+            let finalRight = 0;
+            let answered = 0;
+            userAnswers.forEach((ans, idx) => {
+                if (ans !== null) {
+                    answered++;
+                    if (isUserAnswerCorrect(currentChapter, idx, ans)) finalRight++;
+                }
+            });
+
+            document.getElementById('final-score').innerText = `本章共 ${total} 题，你答了 ${answered} 题，其中答对 ${finalRight} 题。正确率 ${answered === 0 ? 0 : Math.round(finalRight/answered*100)}%`;
+            
+            const wrongOnesInCh = userAnswers.map((ans, idx) => (ans !== null && !isUserAnswerCorrect(currentChapter, idx, ans)) ? idx : null).filter(v => v !== null);
+            
+            if (wrongOnesInCh.length > 0) {
+                document.getElementById('retry-wrong-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('retry-wrong-btn').classList.add('hidden');
+            }
+        }
+
+        // 本章错题温习
+        function retryWrongOnes() {
+            const chWrongs = wrongBook.filter(item => item.chIdx === currentChapter);
+            if (chWrongs.length === 0) {
+                alert("本章没有任何错题记录！");
+                showHome();
+                return;
+            }
+            isWrongBookMode = true;
+            currentIdx = 0;
+            switchScreen('quiz-screen');
+            renderQuestion();
+        }
+
+        // 回首页
+        function showHome() {
+            isWrongBookMode = false;
+            switchScreen('home-screen');
+            renderChapterList();
+            updateGlobalStats();
+        }
+
+        // 页面切换助手
+        function switchScreen(screenId) {
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+
+            document.getElementById(screenId).classList.remove('hidden');
+            
+            // 手机端在首页和结果页隐藏悬浮按钮
+            if (screenId === 'quiz-screen') {
+                document.getElementById('mobile-fab').classList.remove('hidden');
+            } else {
+                document.getElementById('mobile-fab').classList.add('hidden');
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
