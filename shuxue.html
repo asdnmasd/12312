@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>临床输血医学相容性自测系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff5f5',
+                            100: '#ffe3e3',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        button, .option-btn {
+            touch-action: manipulation;
+        }
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (min-width: 1024px) {
+            .option-btn:hover:not(:disabled) {
+                transform: translateX(6px);
+            }
+        }
+        .correct {
+            background-color: #10b981 !important;
+            color: white !important;
+            border-color: #059669 !important;
+        }
+        .wrong {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        .correct-outline {
+            border-color: #10b981 !important;
+            background-color: #ecfdf5 !important;
+            color: #065f46 !important;
+        }
+        .dark .correct-outline {
+            background-color: #064e3b !important;
+            color: #34d399 !important;
+        }
+        .drawer-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300 flex flex-col selection:bg-red-500 selection:text-white">
+    
+    <!-- 顶栏 -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="max-w-6xl mx-auto px-4 h-14 md:h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2 md:space-x-3">
+                <span class="p-1.5 bg-red-600 text-white rounded-lg animate-pulse">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 9.172V5L8 4z"></path></svg>
+                </span>
+                <span class="text-base md:text-lg font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">输血医学相容性自测</span>
+                <span id="top-badge" class="px-2 py-0.5 text-[10px] md:text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300">245题全量版</span>
+            </div>
+            <div class="flex items-center space-x-2 md:space-x-3">
+                <button onclick="resetAllProgress()" class="p-2 rounded-lg bg-red-50 dark:bg-red-950/20 text-red-500 hover:bg-red-100 transition text-xs flex items-center space-x-1" title="清空全部自测数据">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <span class="hidden sm:inline">重置</span>
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="切换深色模式">
+                    <svg id="sun-icon" class="w-4 h-4 md:w-5 md:h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                    <svg id="moon-icon" class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+                <button onclick="showWrongBook()" class="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs md:text-sm font-medium transition flex items-center space-x-1">
+                    <span>错题集</span>
+                    <span id="wrong-count" class="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 px-1.5 py-0.5 rounded-full text-[10px] md:text-xs">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体 -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-3 md:p-8 flex flex-col justify-start">
+        
+        <!-- 首页章节选择 -->
+        <div id="home-screen" class="space-y-6 md:space-y-8 w-full">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl md:rounded-3xl shadow-md p-6 md:p-12 text-center relative overflow-hidden transition">
+                <div class="absolute top-0 right-0 w-48 h-48 md:w-64 md:h-64 bg-red-100/30 dark:bg-red-900/10 rounded-full filter blur-3xl -mr-16 -mt-16"></div>
+                <h1 class="text-2xl md:text-4xl font-extrabold text-slate-800 dark:text-white tracking-tight mb-2 md:mb-4">临床输血医学相容性自测系统</h1>
+                <p class="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-xs md:text-sm px-2">本系统完美集成了《临床输血检验》**全部 245 道经典课后测试真题**。包含红细胞检测、血型抗原、血液保存制备、治疗程序及不良反应。支持各章节多级进度保存、自动错题拦截、手势滑动自适应切题。</p>
+                
+                <div class="mt-6 md:mt-8 flex justify-center space-x-3 md:space-x-4">
+                    <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl md:rounded-2xl px-4 py-3 md:px-6 md:py-4 border border-slate-100 dark:border-slate-800 min-w-[100px] md:min-w-[120px]">
+                        <div class="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400" id="global-progress">0%</div>
+                        <div class="text-[10px] md:text-xs text-slate-400">总完成进度</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl md:rounded-2xl px-4 py-3 md:px-6 md:py-4 border border-slate-100 dark:border-slate-800 min-w-[100px] md:min-w-[120px]">
+                        <div class="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400" id="global-accuracy">0%</div>
+                        <div class="text-[10px] md:text-xs text-slate-400">自测正确率</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chapter-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+        </div>
+
+        <!-- 答题自测界面 -->
+        <div id="quiz-screen" class="hidden lg:grid lg:grid-cols-4 gap-6 md:gap-8 flex-grow animate-fade-in">
+            <!-- 答题主面板 -->
+            <div class="lg:col-span-3 flex flex-col justify-between space-y-4 md:space-y-6">
+                <div class="flex items-center justify-between">
+                    <button onclick="showHome()" class="text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 flex items-center text-sm md:text-base font-medium transition">
+                        <svg class="w-4 h-4 md:w-5 md:h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        返回首页
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button id="chapter-reset-btn" onclick="resetChapter()" class="px-2.5 py-1 text-xs font-semibold rounded bg-orange-50 dark:bg-orange-950/20 text-orange-600 hover:bg-orange-100 transition flex items-center space-x-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89l-4.244 4.243"></path></svg>
+                            <span>重置本章</span>
+                        </button>
+                        <div class="text-xs md:text-sm font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800" id="progress-text">第 1 / 10 题</div>
+                    </div>
+                </div>
+
+                <!-- 手势滑动的卡片 -->
+                <div id="swipe-area" class="bg-white dark:bg-slate-800 rounded-xl md:rounded-2xl shadow-sm border border-slate-150 dark:border-slate-850 p-5 md:p-8 flex-grow flex flex-col justify-between transition min-h-[350px] select-none relative">
+                    <div>
+                        <div id="category-tag" class="inline-block px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] md:text-xs font-semibold mb-3 md:mb-4">章节名称</div>
+                        <h2 id="question-text" class="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100 leading-relaxed mb-4 md:mb-6">加载中...</h2>
+                    </div>
+                    
+                    <div id="options-container" class="space-y-3.5 w-full"></div>
+
+                    <!-- 深度考点解析 -->
+                    <div id="analysis-box" class="mt-6 p-4 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-300 rounded-xl border border-emerald-100 dark:border-emerald-900 text-xs md:text-sm hidden leading-relaxed">
+                        <p class="font-bold flex items-center gap-1.5 mb-1 text-emerald-700 dark:text-emerald-400">💡 官方参考解析：</p>
+                        <p id="analysis-text">暂无解析数据。</p>
+                    </div>
+                </div>
+
+                <!-- 答题控制栏 -->
+                <div class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 md:p-4 rounded-xl border border-slate-150 dark:border-slate-850">
+                    <div class="flex flex-col md:flex-row md:items-center md:space-x-2">
+                        <span class="text-[10px] md:text-xs text-slate-400">当章答题正确率:</span>
+                        <span id="accuracy" class="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300">0%</span>
+                    </div>
+                    <div class="space-x-2 flex">
+                        <button id="prev-btn" onclick="prevQuestion()" class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30 transition text-xs md:text-sm font-medium">上一题</button>
+                        <button id="next-btn" onclick="nextQuestion()" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition text-xs md:text-sm font-medium">下一题</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧答题卡导航 (PC 端) -->
+            <div class="hidden lg:block space-y-6">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-150 dark:border-slate-850 p-6">
+                    <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex justify-between items-center">
+                        <span>自测答题卡</span>
+                        <span class="text-[10px] font-normal text-slate-400">支持快速跳转</span>
+                    </h3>
+                    <div id="answer-card-grid-desktop" class="grid grid-cols-5 gap-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-150 dark:border-slate-850 p-4 text-center">
+                    <button onclick="finishSection()" class="w-full py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-red-500 hover:text-white rounded-lg text-sm font-bold transition">
+                        提前交卷并结算
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结算界面 -->
+        <div id="result-screen" class="hidden max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl md:rounded-3xl shadow-md p-6 md:p-12 text-center mt-6 border border-slate-150 dark:border-slate-850 w-full">
+            <div class="w-16 h-16 md:w-20 md:h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-xl md:text-2xl font-bold mb-2">本次自测结算！</h2>
+            <p id="final-score" class="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8">你一共答对了 0 道题。</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="showHome()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 transition font-medium text-sm md:text-base">返回主页章节</button>
+                <button onclick="retryWrongOnes()" id="retry-wrong-btn" class="border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition font-medium text-sm md:text-base hidden">强化挑战当章错题</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 移动端底盘悬浮控制 -->
+    <div id="mobile-fab" class="lg:hidden fixed bottom-6 right-4 z-30 flex flex-col space-y-3">
+        <button onclick="finishSection()" class="p-3 bg-slate-800/90 dark:bg-slate-700/90 text-white hover:bg-red-500 dark:hover:bg-red-600 rounded-full shadow-lg transition duration-200 flex items-center justify-center border border-slate-700/50" aria-label="交卷">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        </button>
+        <button onclick="toggleMobileDrawer(true)" class="p-3 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 transition flex items-center justify-center border border-red-500/50" id="fab-drawer-btn">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        </button>
+    </div>
+
+    <!-- 手机端答题卡抽屉 -->
+    <div id="mobile-drawer-overlay" class="lg:hidden fixed inset-0 bg-slate-900/60 z-50 opacity-0 pointer-events-none transition-opacity duration-300" onclick="toggleMobileDrawer(false)">
+        <div id="mobile-drawer" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 rounded-t-2xl p-5 max-h-[70vh] flex flex-col drawer-transition transform translate-y-full" onclick="event.stopPropagation()">
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4" onclick="toggleMobileDrawer(false)"></div>
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-base font-bold text-slate-800 dark:text-white">本章自测答题卡</span>
+                <button onclick="toggleMobileDrawer(false)" class="text-xs text-red-600 dark:text-red-400 font-bold">收起</button>
+            </div>
+            <div id="answer-card-grid-mobile" class="grid grid-cols-5 gap-2.5 overflow-y-auto pr-1 pb-6 custom-scrollbar"></div>
+        </div>
+    </div>
+
+    <script>
+        // 245道临床输血医学大纲全库无损集成
+        const quizData = [
+            {
+                title: "第一章：绪论 (5题)",
+                questions: [
+                    { q: "人类输血史上第一个被发现的红细胞血型系统是", a: ["MNS", "Duffy", "ABO", "Rh", "Xg"], c: 2, desc: "ABO血型系统是人类输血史上首个被Landsteiner于1900年发现的红细胞血型系统。" },
+                    { q: "1817年, 英国妇产科医生结合动物输血的成功经验, 施行人-人输血救治大出血产妇, 却有近半数患者死亡, 下面哪项说法是错误的", a: ["患者因血型不合出现了输血反应", "大出血产妇应考虑止血, 不应进行输血治疗", "输血所致的免疫反应加快了死亡", "疾病原因导致的患者死亡", "未进行血型配合性检查, 盲目实施输血治疗"], c: 1, desc: "在面临急性产科大出血合并休克危险时，补充血容量及输血治疗是强有力的抢救指征。死亡的主要原因是因当时不了解血型系统导致严重的血型不合溶血。" },
+                    { q: "最重要的新一代血液成分制品研究是", a: ["细胞培养和基因扩增", "血液代用品和人造血的研发", "单克隆技术", "基因工程技术", "细胞因子研究"], c: 1, desc: "血液代用品和人造红细胞/人造血的研发能有效缓解供血紧张、避免交叉病原传播，是新一代血液制品的核心课题。" },
+                    { q: "哪一年尝试应用塑料输血器材", a: ["1900", "1950", "2010", "1920", "1980"], c: 1, desc: "1950年前后，塑料输血袋和输血管开始尝试投入临床，极大地推进了成分输血与无菌保存的发展。" },
+                    { q: "Landsteiner 首次发现人类红细胞上存在血型抗原。关于血型的发现，下面说法不正确的是", a: ["1940年再次发现Rh血型", "首次发现人类红细胞A、B、O血型", "因发现 ABO血型而获得了诺贝尔生理学或医学奖", "享有“血型之父”的美誉", "发现人类红细胞 AB血型"], c: 4, desc: "Landsteiner在1900年首次发现了A、B、O三种血型。AB亚型则是于1902年由他的学生Decastello和Sturli补充发现的。" }
+                ]
+            },
+            {
+                title: "第二章：输血医学基本理论 (10题)",
+                questions: [
+                    { q: "男, 78岁。需2单位AB型红细胞, 经盐水试验与4例AB型库存血配血, 发现主侧均为1+凝集。若患者自身红细胞和自身血清在盐水中有凝集反应, 最可能的情况是", a: ["存在冷抗体或血浆蛋白异常", "存在意外抗体", "存在球蛋白升高", "存在温自身抗体", "存在冷自身抗体"], c: 0, desc: "盐水介质中自身红细胞与自身血清发生反应，且多侧交叉配血有微弱凝集，最常提示存在冷凝集素（冷抗体）或患者伴发高球蛋白等血浆蛋白异常。" },
+                    { q: "男, 59岁。因慢性右心衰竭收入院, 查体可见双下肢明显水肿, 其主要原因可能是", a: ["血浆胶体渗透压降低", "组织液胶体渗透压升高", "毛细血管血压升高", "组织液静水压降低", "淋巴回流受阻"], c: 2, desc: "右心衰竭导致体循环静脉回流受阻，静脉压和毛细血管流体静压升高，使组织液生成增多，导致双下肢水肿。" },
+                    { q: "下列遗传方式的群体中比例为女:男=2:1的是", a: ["常染色体显性遗传", "常染色体隐性遗传", "Y连锁遗传", "X 连锁隐性遗传", "X 连锁显性遗传"], c: 4, desc: "X连锁显性遗传由于女性有两条X染色体，其患病概率约为男性的2倍（比例2:1）。" },
+                    { q: "血红蛋白氧饱和度的主要影响因素是", a: ["二氧化碳分压", "氧分压", "pH", "体温", "2,3-二磷酸甘油酸盐浓度"], c: 1, desc: "血红蛋白氧饱和度（$SO_2$）主要取决于血液中的氧分压（$PO_2$），两者呈S型氧解离曲线关系。" },
+                    { q: "血浆蛋白的主要功能不包括", a: ["免疫防御", "维持 pH", "输送营养物质", "维持血浆晶体渗透压", "参与止凝血"], c: 3, desc: "血浆蛋白（特别是白蛋白）分子量大，主要维持血浆的“胶体”渗透压。而晶体渗透压则主要依靠无机盐等小分子晶体维持。" },
+                    { q: "血浆与组织液各种成分浓度的主要区别是", a: ["蛋白质", "钠离子", "钾离子", "有机酸", "血细胞"], c: 0, desc: "血浆与组织液在无机盐、水分等小分子滤过成分上极为相似，最本质的区别在于血浆含有高浓度的蛋白质（无法通过毛细血管壁）。" },
+                    { q: "红细胞冷抗体最活跃的温度是", a: ["$37^{\\circ}C$", "$4^{\\circ}C\\pm2^{\\circ}C$", "$22^{\\circ}C$", "$56^{\\circ}C$", "$4^{\\circ}C$"], c: 4, desc: "红细胞冷抗体（如抗-I）通常是IgM类，其与靶抗原在超低温环境中结合力极强，最适结合温度为$4^{\\circ}C$。" },
+                    { q: "父亲红细胞 ABO血型为AB型, 母亲为 A型(基因型为AO), 子代可能出现的血型为", a: ["A", "A、B、O", "A、B、O、AB", "AB", "A、B、AB"], c: 4, desc: "AB型(AB)与AO型进行重组配对，子代的基因型可能为：AA(A型)、AO(A型)、BB(B型)、BO(B型)及AB(AB型)。因此可能产生A、B、AB型。" },
+                    { q: "父亲红细胞 ABO血型为A型, 母亲为B型, 子代为AB型。这种遗传方式是", a: ["完全显性", "延迟显性", "不规则显性", "不完全显性", "共显性"], c: 4, desc: "A和B等位基因都是显性基因。当两者同时存在时其抗原均能显现表达，这种现象被称为共显性遗传。" },
+                    { q: "若A型血液误输给B型患者, 可引起血管内溶血反应, 参与反应的主要抗体是", a: ["IgA", "IgD", "IgE", "IgG", "IgM"], c: 4, desc: "ABO血型天然抗体属于高效价、有强固氮结合补体活性的 IgM 类抗体，连入可造成毁灭性的血管内快速溶血。" }
+                ]
+            },
+            {
+                title: "第三章：人体血型与抗原抗体 (30题)",
+                questions: [
+                    { q: "患者, 男, 55岁, 近半年来皮肤黏膜出血, PLT $40\\times10^9/L$, 血小板自身抗体阳性, 骨髓巨核细胞增多伴成熟障碍。可能诊断为", a: ["免疫性血小板减少症(ITP)", "过敏性紫癜", "自身免疫性溶血性贫血", "骨髓增生异常综合征", "输血后紫癜"], c: 0, desc: "自身血小板抗体强阳性、血小板重度减低且骨髓伴巨核细胞代偿性增多伴成熟障碍，是免疫性血小板减少症（ITP）特征表现。" },
+                    { q: "有关孟买型的叙述, 错误的是", a: ["红细胞与抗-A抗体不产生凝集反应", "红细胞与抗-H抗体不发生凝集反应", "血清中有抗A和抗B抗体", "血清中有 IgG类抗H抗体", "红细胞与抗A、抗B抗体均不发生凝集反应"], c: 4, desc: "孟买型不表达H抗原。因为缺乏H抗原，所以也就没有A、B抗原。其红细胞不与抗A、抗B、抗H反应。但由于本病血清中常存在针对正常人H抗原的高滴度抗-H抗体，所以无法输注普通红细胞。" },
+                    { q: "关于 Rh 血型抗原, 下列说法正确的是", a: ["抗原强弱为D>E>C>c>e", "CCDEe 与CcDEe相比, 前者的C抗原较强", "CCDEe与CcDEe相比, 前者的E抗原较强", "CCDEe 与 CcDEe 相比, 前者的D抗原较强", "抗原性强于ABO 系统抗原"], c: 0, desc: "Rh血型系统中，各抗原产生免疫原性的强度顺序为：D > E > C > c > e。" },
+                    { q: "白血病患者多次输注 ABO同型的血小板治疗。最近几次输注后效果均不佳, 最可能原因是", a: ["患者体内产生了HPA-1抗体", "患者体内产生了其他红细胞抗体", "患者体内产生了HLA同种抗体", "患者体内产生了自身血小板抗体", "患者体内产生了粒细胞抗体"], c: 2, desc: "血小板表面大量表达HLA-I类抗原。由于反复、长期多次输入异体血小板，极高发同种HLA抗体生成，导致血小板快速被脾脏清除清除（PTR）。" },
+                    { q: "白细胞表达的特有血型抗原为", a: ["Rh 血型抗原", "中性粒细胞特异性抗原(HNA)", "ABO血型抗原", "人类白细胞抗原(HLA)", "P 血型抗原"], c: 1, desc: "人类白细胞抗原广泛存在多系表面；但中性粒细胞特异性抗原（HNA）是仅特异性分布并表达于中性粒细胞表面的特有系统。" },
+                    { q: "与ABO 抗原不同, Rh抗原在哪个时期得到了充分发育", a: ["新生儿期", "胎儿早期", "成人期", "老年期", "青壮年期"], c: 1, desc: "Rh系统各抗原早在胎儿发育的超早期就已经高度发育健全，因而在新生儿溶血（Rh-HDN）中发病极重。" },
+                    { q: "引起血小板输注无效(PTR)的最常见同种免疫抗体是", a: ["HLA 核心抗体", "I 系统抗体", "ABO 同种抗体", "Rh 意外抗体", "HPA 结合抗体"], c: 0, desc: "约80%-90%的免疫性血小板输注无效(PTR)是由于受者体内产生针对供者 HLA-I 类分子（A或B位点）的同种抗体导致的。" },
+                    { q: "A型个体的主要亚型是", a: ["A2 和 Ax", "A1 和A2", "A3 和 Ax", "Am 和 Ax", "A2 和 A3"], c: 1, desc: "在人类ABO血型中，A型主要存在 A1（占绝大多数）和 A2 两大最具临床意义的亚型。" },
+                    { q: "关于HLA分子的组织分布, 错误的是", a: ["HLA-II类分子主要表达在巨噬细胞、树突状细胞等专职APC 表面", "HLA-I 类分子广泛分布于所有有核细胞表面", "心、肝、肺组织表达 HLA-I类分子水平比较低", "巨噬细胞和树突状细胞 HLA 分子的表达量都比较高", "在血、尿、唾液、精液及乳汁中 HLA 分子一般不表达"], c: 4, desc: "可溶性HLA-I类和II类分子广泛存在于全血、尿液、唾液及乳汁等多种体液分泌物中。" },
+                    { q: "Lewis 抗原合成受控于哪些基因", a: ["FUT1(H)和 FUT2(Se)", "FUT2(Se)和 FUT3(Le)", "FUT1(H)", "FUT2(Se)", "FUT3(Le)"], c: 1, desc: "Lewis抗原的特异性合成必须依靠分泌基因 FUT2(Se) 和路易斯基因 FUT3(Le) 之间的协同串联表达。" },
+                    { q: "重型再生障碍性贫血患者, 需要长期输血, 反复输血可使患者体内出现", a: ["HLA-II类抗体", "HNA-2a 抗体", "HNA-I 抗体", "HLA-I 类同种抗体", "HNA-4a 抗体"], c: 3, desc: "长期输入含极少量有核白细胞的成分血液，其表面的HLA-I抗原会高强免疫刺激受者，使其产生针对HLA-I的异体抗体。" },
+                    { q: "关于 Rh 血型遗传, 下列说法正确的是", a: ["Rh 阳性与 Rh阳性个体婚配, 后代可有Rh阴性", "Rh 阳性与 Rh阴性个体婚配, 后代必定是 Rh 阳性", "Rh 阳性与 Rh阳性个体婚配, 后代必定是 Rh阳性", "CCDEe 个体与CcDEe个体婚配, 后代不会出现 CCdee", "CCDEE 个体与CcDEe个体婚配, 后代可有 ccDee"], c: 0, desc: "RhD基因具有显隐性特征。若父母皆为Dd杂合阳性，其相配有 25% 的概率（dd）诞生出 Rh 阴性的后代。" },
+                    { q: "常用于检测 ABH血型物质的体液是", a: ["脑脊液", "唾液", "胃液", "精液", "泪液"], c: 1, desc: "分泌型人群中唾液含有超高浓度的可溶性ABH血型物质，极易用于中和阻断试验诊断亚型。" },
+                    { q: "根据 ABO血型遗传规则, 父亲为O型, 母亲为B型(且为杂合BO), 其子女可能为", a: ["B或O", "A或O", "A、B、AB 或O", "A、B或AB", "O"], c: 0, desc: "O型(OO)与BO型结合，其后代的重组基因只可能是 BO(B型) 或 OO(O型)。" },
+                    { q: "人类 ABO血型抗原属于", a: ["异嗜性抗原", "自身抗原", "同种异型抗原", "异种抗原", "半抗原"], c: 2, desc: "ABO血型抗原是同一种属（人）不同个体之间存在的免疫学差异抗原，被称为同种异型抗原。" },
+                    { q: "ABO血型系统抗体主要为", a: ["免疫性抗体", "意外抗体", "异种抗体", "自身抗体", "天然抗体"], c: 4, desc: "人类ABO系统的抗-A或抗-B主要是在没有明显输血或免疫史情况下由于接触环境肠道类似抗原所产生的“天然抗体”。" },
+                    { q: "Rh 阴性患者且体内已有抗D抗体, 若输注 Rh阳性血液, 溶血反应将", a: ["延迟发生", "立即发生", "半天后发生", "不会发生", "间歇发生"], c: 1, desc: "因体内早已在前期妊娠或输血中致敏产生了针对D的抗-D，本次一旦连入D阳性红细胞会发生灾难性的即刻溶血。" },
+                    { q: "MNS 血型系统中GYPA和GYPB 基因分别编码的蛋白是", a: ["MM、MN 抗原", "MM、NN 抗原", "GPA 和 GPB", "MN、Ss 抗原", "SS、ss抗原"], c: 2, desc: "MNS系统中，1号常染色体上的 GYPA 编码甘氨酸糖蛋白A (GPA)，GYPB 编码甘氨酸糖蛋白B (GPB)。" },
+                    { q: "O型红细胞上存在的血型抗原为", a: ["B 抗原", "A 抗原", "H 抗原", "A和B抗原", "ABH 抗原"], c: 2, desc: "O型由于缺乏A、B转移酶，前体链只被H酶修饰，因此其表面含有最丰富的H抗原。" },
+                    { q: "双肾结石, 慢性肾功能衰竭拟行肾移植手术, 组织配型时最需要严格考虑共显的位点是", a: ["HLA-DP、DQ和DR", "HLA-A、 B", "HLA-A、B和DQ", "HLA-A、B、DR", "HLA-A、B、DP"], c: 3, desc: "实体脏器移植中，供受者的 HLA-A、HLA-B 及 HLA-DR 位点基因相符度直接决定移植后排斥反应的发生率。" },
+                    { q: "需要严格开展正反定型双向复核的红细胞血型系统为", a: ["PIPK", "ABO", "Kell", "MNS", "Rh"], c: 1, desc: "为了保证输血的安全、发现各种亚型，只有ABO血型系统在临床常规中必须同时开展红细胞正定型与血清反定型。" },
+                    { q: "关于 ABO亚型, 下面描述正确的是", a: ["A1型红细胞上有较弱的抗原", "A1型红细胞上有A1抗原和A2抗原", "A1型红细胞上只有A1抗原", "A2型红细胞与抗A呈现弱凝集", "A2型红细胞上只有A2抗原"], c: 1, desc: "A1型红细胞结构最为完整，其表面同时包罗并呈现A和A1抗原决定簇。A2则只含有A而缺乏A1特征。" },
+                    { q: "ABO抗体的临床意义是", a: ["ABO 抗体在造血干细胞移植(HSCT)中具有重要意义", "以上全是", "ABO 抗体可以引起血管内溶血", "ABO 抗体可引起新生儿溶血病", "ABO 可以引起严重的溶血性输血反应"], c: 1, desc: "ABO系统的抗体是临床输血反应、移植排斥、新生儿溶血以及急诊大出血的核心靶标，临床意义极高。" },
+                    { q: "关于P1PK 血型抗原的描述, 下列哪项是不正确的", a: ["P1、P、Pk抗原均缺失时为p型", "P1 抗原阴性时称为P2型", "PIPK 血型抗原的存在或缺失组合, 产生P1、P2、Pk、P、p五种表型", "PIPK 血型系统包括P1、P、Pk抗原", "P 血型系统产生的抗体多为温抗体"], c: 4, desc: "P血型系统所产生的各类冷凝集抗体（如抗-P1）绝大多数是典型的不结合温环境的冷抗体。" },
+                    { q: "在ABO血型鉴定时, 如怀疑受检者血清中有意外抗A1抗体时, 应使用下列哪种细胞复核", a: ["A 细胞", "A1 细胞", "B 细胞", "O 细胞", "A2 细胞"], c: 1, desc: "通过将受检血清与已知的 A1 和 A2 试剂红细胞分别进行交叉反应，能准确发现是否存在游离的抗-A1。" },
+                    { q: "正常成人红细胞上的H抗原表达的强弱顺序依次为", a: ["O型>A1B 型>B型>A2型>A1型>A2B型", "O 型>A1型>B型>A2B 型>A2型>A1B 型", "O 型>A2型>B型>A2B 型>A1型>A1B型", "O 型>B 型>A2型>A2B 型>A1型>A1B型", "O 型>A2B 型>B型>A2型>A1型>A1B 型"], c: 2, desc: "由于A1、B转移酶会大量消耗H底物转化，因此H抗原暴露强弱顺序为：O > A2 > B > A2B > A1 > A1B。" },
+                    { q: "关于 Kell 血型系统抗原的描述, 不正确的是", a: ["Kell 血型系统的主要抗原是K和k", "中国汉族人群红细胞上的Kell 血型抗原均为 k", "白种人K抗原约占10%", "K抗原带负电荷, 不宜使用凝聚胺方法检测抗原", "Kell 血型系统检测宜使用抗球蛋白试验"], c: 3, desc: "Kell系统的抗原由于本身带有正电荷，凝聚胺试剂中由于电荷斥力消减不佳，不适用常规凝聚胺技术测定。" },
+                    { q: "下列哪项不属于HLA的独特遗传特点", a: ["连锁不平衡", "共显性遗传", "高度多态性", "多基因性", "隐性遗传"], c: 4, desc: "人类白细胞抗原（HLA）在表达上属于高度复杂的单倍型共显性显性表达遗传，不遵循隐性遗传规律。" },
+                    { q: "关于部分D（Partial D）表型的描述, 正确的是", a: ["D抗原的数量正常或减弱，但外周多抗原结构存在部分缺失", "红细胞表面没有任何D抗原", "红细胞膜上D抗原表达增强", "红细胞膜上 D抗原表达极弱, 单个红细胞上D抗原少于200个", "红细胞膜外氨基酸发生突变，但不影响抗原表位"], c: 0, desc: "部分D（Partial D）红细胞上D抗原数量不一定减少，但其表位的空间多肽构象发生了基因段置换缺失，易引发抗D抗体产生。" },
+                    { q: "只在血小板表面特异性表达的抗原系统是", a: ["HLA-I 类", "HLA-II 类", "HPA（血小板特异抗原）", "ABO", "Rh"], c: 2, desc: "HPA（Human Platelet Antigens）是仅独立且特异性合成于血小板膜表面整合素糖蛋白上的独特血型抗原。" }
+                ]
+            },
+            {
+                title: "第四章：红细胞血型检测技术 (44题)",
+                questions: [
+                    { q: "关于输血原则的叙述, 正确的是", a: ["第一次配血相合且顺利输血, 再次接受同一献血员的血液无须交叉配血", "紧急情况下, 尽量输型血给其他血型的受血者", "AB0 同型输血, 交叉配血的主侧管和次侧管都不凝集", "只要ABO血型相同就可以输血", "只要交叉配血主侧不凝就可以输血"], c: 2, desc: "在同型输血的前提下，主次侧交叉配血必须均完全无凝集、无溶血反应，方可批准输注。" },
+                    { q: "临床常用的配血技术有多种, 哪一种方法是最基础、最基本的方法", a: ["盐水介质法", "凝胶法", "聚凝胺介质法", "抗人球蛋白法", "酶法"], c: 0, desc: "盐水介质法操作极为简单、耗时短，是临床血型鉴定和发现IgM类抗体的最基础首选血清学手段。" },
+                    { q: "血小板基因分型方法至少有", a: ["5种", "4种", "2种", "6种", "3种"], c: 3, desc: "目前已建立并被国际公认的血小板HPA基因分型方法至少有6种技术方向（如PCR-SSP, PCR-RFLP, 分子测序等）。" },
+                    { q: "目前检测血小板抗原及开展特异配型的最常用方法是", a: ["免疫荧光技术", "细胞培养方法", "单克隆抗体免疫固定血小板抗原方法", "分子生物学基因分型方法", "简易致敏红细胞血小板血清学试验"], c: 3, desc: "由于血小板血清学试剂获取极为困难，分子生物学（PCR-SSP等基因定型）目前是检测HPA最广泛的标准手段。" },
+                    { q: "红细胞凝集强度有不同的等级, 试管法“2+”凝集强度的判断标准是", a: ["背景清晰, 数个较大凝块和部分小凝块, 无游离红细胞", "背景浑浊, 肉眼呈细小颗粒状, 显微镜下有细小凝块", "背景浑浊, 凝块较细小较多, 游离红细胞较多", "背景清晰, 一个大凝块, 无游离红细胞", "背景清晰, 凝块较小较多, 游离红细胞较少"], c: 4, desc: "“2+”强度的特征为：上清和背景完全清晰，上皮肉眼可见大量较小但清晰的红细胞凝块，游离未结合红细胞极少。" },
+                    { q: "临床常用的HLA分型技术中的基因分型方法与血清学检测方法侧重点不同, 其前者主要检测的是", a: ["HLA-I类抗原", "HLA-II 类抗原", "DNA序列核苷酸多态性", "游离抗体", "HNA 抗体"], c: 2, desc: "基因分型（PCR-SBT, NGS等）是直接检测外显子多态性区域的核苷酸序列多态性，相比抗血清分型更为精准。" },
+                    { q: "下列关于红细胞ABO血型鉴定中不正确的是", a: ["O型血清在红细胞ABO亚型鉴定中不起作用", "O型红细胞用于检查是否存在意外抗体", "新生儿和出生6个月之内的婴儿可以只做正定型", "用已知抗体型特异性试剂血清检测红细胞的抗原, 称为正向定型", "用已知血型的试剂红细胞检测血清中的抗体, 称为反向定型"], c: 0, desc: "O型血清（含抗-A,B）中富含能高凝集弱A、弱B亚型的特异单克隆组分，在亚型和变异型的鉴定中极具诊断作用。" },
+                    { q: "在血型鉴定和交叉配血时, 红细胞缗钱状形成的主要原因是", a: ["血浆大分子球蛋白或纤维蛋白原增高", "自身免疫性温性抗体", "冷自身抗体", "被检红细胞悬液浓度过高", "血清中冷凝集素效价异常"], c: 0, desc: "当受检者血浆中大分子球蛋白或高浓度纤维蛋白原聚集，会中和红细胞电荷阻碍斥力，导致红细胞如缗钱状对叠。" },
+                    { q: "筛查红细胞意外抗体不能单独使用哪种方法", a: ["酶技术", "IAT（间接抗人球蛋白法）", "聚凝胺法", "盐水介质法", "低离子强度介质法"], c: 3, desc: "盐水法只能测定IgM类。由于95%以上的临床红细胞意外抗体为不完全温抗体（IgG类），必须依靠间接Coombs或聚凝胺系统进行筛查。" },
+                    { q: "下列哪种血型系统抗原表面带负电荷屏障，不宜使用凝聚胺技术进行检查", a: ["Rh", "Kell", "MNS", "Kidd", "Duffy"], c: 1, desc: "Kell系统的红细胞抗原在凝聚胺（Polybrene）极性拉拢判定中不敏感，需要依赖Coombs试验配血。" },
+                    { q: "怀疑患者是A2型, 应选择哪种抗体试剂进行交叉区分", a: ["抗A, B", "抗B", "抗H", "抗 A2", "抗 A1"], c: 4, desc: "A1试剂红细胞可产生抗-A1，而A2细胞不含有A1。抗-A1试剂不与A2细胞结合，据此可以特异区分A1和A2。" },
+                    { q: "在微量淋巴细胞毒试验中, 关于补体特性描述错误的是", a: ["补体活性偏高可产生假阳性", "补体对淋巴细胞毒试验存在影响", "补体活性偏低可产生假阴性", "实验前应先对补体进行预试验", "补体具有完全天然细胞毒性会产生假阴性"], c: 4, desc: "补体天然自带的细胞毒性，如果控制不佳，会非特异直接破坏有核细胞造成假阳性发生，而非假阴性。" },
+                    { q: "临床上交叉配血的最核心目在于", a: ["防止意外抗体存在", "防止血型鉴定错误", "判断 ABO亚型", "最大限度避免溶血性输血反应(HTR)", "防止自身抗体干扰"], c: 3, desc: "临床配血是对受血者生命安全的最后一道卡控，其宗旨是在受者红细胞及血浆层面发现不规则抗原抗体结合，杜绝HTR。" },
+                    { q: "在抗球蛋白交叉配血试验中, 抗人球蛋白试剂的作用是", a: ["吸附作用", "降解作用", "催化作用", "搭桥作用", "中和作用"], c: 3, desc: "抗人球蛋白是多价抗体。通过识别已结合在红细胞膜上的IgG抗体的Fc段，在其间搭建桥梁，使不完全抗体红细胞发生肉眼凝集。" },
+                    { q: "与 HLA-B27 位点高度遗传相关联的临床自身免疫性疾病是", a: ["疱疹样皮肤病", "类风湿关节炎", "糖尿病", "强直性脊柱炎或急性前葡萄膜炎", "银屑病"], c: 3, desc: "超过90%的强直性脊柱炎（AS）以及部分急性前葡萄膜炎患者在基因型上呈现 HLA-B27 强阳性关联。" },
+                    { q: "关于ABO血型鉴定的方法, 下列说法不正确的是", a: ["试管法通常用于大规模普查和 POCT 快速检查", "试管法比玻片法更敏感、可靠", "生理盐水法只能观察到 IgM类抗体与含有相应抗原的红细胞反应", "试管法、玻片法、微量板法均是在生理盐水介质中进行", "微柱凝集法是利用分子筛技术和免疫学技术的原理判定红细胞血型"], c: 0, desc: "大批量快速过筛和床旁POCT通常选用玻片法或凝集卡片法。试管法由于涉及加样和多次离心，不作为野外快检POCT的首选。" },
+                    { q: "关于抗体筛查试验, 下列哪种方法被公认为在微孔操作中对IgG抗体最敏感", a: ["凝聚胺法", "酶法", "抗球蛋白法", "微柱凝胶过滤法", "盐水法"], c: 3, desc: "微柱凝胶法（Gel card）中凝胶介质可拦截被抗球蛋白搭桥凝聚的红细胞网络，对极微量的IgG不完全抗体检测最为敏感。" },
+                    { q: "用于ABO亚型鉴定的对照试剂红细胞, 不包括", a: ["AB 细胞", "A2 细胞", "B 细胞", "A1 细胞", "O 细胞"], c: 0, desc: "进行亚型鉴定通常需要单特异的 A1、A2、B及O型红细胞作为参照探针，不使用高度混杂的 AB 型红细胞作为对标对照。" },
+                    { q: "足月新生儿出生2天黄疸迅速加重。母亲血型为O型、Rh阳性, 父亲为AB型、Rh阳性, 该病最可能的诊断是", a: ["新生儿母乳性黄疸", "ABO新生儿溶血病(ABO-HDN)", "新生儿肝炎综合征", "新生儿败血症", "Rh新生儿溶血病(Rh-HDN)"], c: 1, desc: "母亲O型（体内含游离抗-A、B的IgG），孩子只可能是A型或B型（由父亲AB提供），抗体通过胎盘极高发ABO-HDN。" },
+                    { q: "ABO血型主侧不合可能导致血小板输注疗效下降的原因是", a: ["受者血小板上高表达AB血型抗原", "供者含有高滴度 IgG类抗A和/或抗B抗体, 与AB型受者血小板抗原反应", "受者和供者血小板表面的ABO抗原物质含量有极大的差异", "供者抗A和/或抗B抗体可与受者血清中的可溶性A/B物质结合形成抗原抗体复合物, 后者可以通过Fc受体结合至血小板表面", "受者体内含有高滴度 IgG 类抗A和/或抗B抗体, 会与输入的A/B型供者血小板膜表面抗原结合破坏"], c: 4, desc: "血小板膜表面同样表达少量的ABO抗原，受者体内的抗-A/抗-B会特异结合并介导输入的供者血小板破坏。" },
+                    { q: "受血者申请输注红细胞成分血液时, 临床输血科必须要开展的实验复核项目是", a: ["受血者 ABO 正反定型、RhD 血型测定, 供血者ABO血型正定型复核", "受血者 ABO正反定型、RhD 血型测定、抗体筛查, 供血者 ABO血型正反定型复核、RhD血型复核, 供受者主次侧交叉配血", "受血者 ABO正反定型、RhD 血型测定, 供血者ABO血型正定型复核, 供受者主侧交叉配血", "受血者 ABO 正反定型、RhD血型测定, 供受者主次侧交叉配血", "受血者 ABO 正反定型、RhD 血型测定, 供血者ABO血型反定型复核, 供受者主侧交叉配血"], c: 1, desc: "为了保证万无一失，临床必须对受血者和供血者的ABO/RhD进行多重定型复核、抗体筛查、以及主次侧全套交叉配血。" },
+                    { q: "下列哪个选项是引起抗球蛋白试验发生假阳性反应的最常见原因", a: ["抗原抗体反应的孵育时间和温度不当", "抗人球蛋白试剂保存不当失活", "红细胞和血清比例不均", "红细胞标本本身受到特定微生物或杂质污染", "未充分洗涤致敏红细胞"], c: 3, desc: "若红细胞标本被细菌或杂质污染（产生T活化），会导致抗人球蛋白发生非特异性桥联凝聚，产生假阳性错误。" },
+                    { q: "患儿3天, 患先天性心脏病室间隔缺损并伴大量左右分流, 输血治疗前不要开展的试验是", a: ["交叉配血试验", "ABO 反定型", "ABO 正定型", "意外抗体筛查", "RhD 血型鉴定"], c: 1, desc: "出生不足半年的婴幼儿，其血清中的ABO抗体极不成熟且多为母体转移来的。反定型结果不可靠，因此前半年可不开展反定型检测。" },
+                    { q: "ABO血型正定型鉴定时, 待检红细胞与抗A试剂发生强凝集, 与抗B不发生凝集, 该受检者的血型可以初步判断为", a: ["O型", "B型", "AB型", "O型或A型", "A型"], c: 4, desc: "与抗A凝集代表含有A抗原，与抗B不凝集代表缺乏B抗原，此为典型的 A 型表现。" },
+                    { q: "微量淋巴细胞毒试验中淋巴细胞制备的特性要求描述错误的是", a: ["肿瘤患者 HLA抗原可减弱", "无效等位基因淋巴细胞表面抗原不表达", "需要高纯度的淋巴细胞悬液", "为了方便，淋巴细胞与测试血清的比例可以任意调整", "需要新鲜标本制备以维持细胞活性"], c: 3, desc: "淋巴细胞与抗体的相互比例高度影响细胞毒杀伤效率，实验有极严格的微量加样加量标准比例，不可任意更改。" },
+                    { q: "血清学反定型的主要目的和临床意义在于", a: ["发现红细胞膜外的意外不规则抗体", "对血型判断本身无意义", "仅仅是正定型的机械补充", "有助于进一步鉴别和发现 ABO亚型及检测不一致", "发现全新的未知血型系统"], c: 3, desc: "反定型通过验证血清中的天然抗体（抗-A, 抗-B）与正定型核对，是查明和确诊各种ABO弱亚型的核心诊断手段。" },
+                    { q: "ABO血型正反定型结果不一致与下列哪项临床因素基本无关", a: ["被检红细胞膜表面抗原受疾病影响减弱", "实验室采血和离心操作规程的规范化", "受检血清中由于疾病产生大分子异常球蛋白干扰", "检测人员的技术水平和熟练度", "使用的抗体试剂保存不当导致效价大幅下降"], c: 1, desc: "按照国家严格标准建立的标准操作规程（SOP）本身是不会造成结果不符的；不一致多源于标本、试剂或操作技术失误。" },
+                    { q: "临床检验中，直接抗人球蛋白试验（DAT）主要用于", a: ["检查血清中的游离抗体", "交叉配血检测", "抗体不规则筛选试验", "基础血型鉴定", "检查红细胞膜表面是否结合了自身同种抗体或补体"], c: 4, desc: "直接抗球蛋白试验（Coombs）是用来检测体内红细胞膜表面上是否已被结合上了不完全抗体或补体的金标准。" },
+                    { q: "以下哪种检查方法不属于区分和确诊ABO亚型的方法", a: ["分泌型人的唾液中A、B和H物质测定", "红细胞与抗-A、抗-A1、抗-B及抗-AB的凝集程度测定", "红细胞上H物质活性的强弱程度测定", "血清中是否存在意外抗-D的测定", "血清中是否存在意外抗-A1的测定"], c: 3, desc: "抗-D属于Rh血型系统的特定意外抗体，与ABO系统亚型的发现和鉴别毫无关联。" },
+                    { q: "微量淋巴细胞毒试验的NIH计分法中，“1分”代表死亡（显色染色）细胞比例为", a: ["11%~20%", "0%~10%（无细胞毒性）", ">80%", "21%~40%", "41%~60%"], c: 1, desc: "NIH 1分代表显微镜下着色（死亡）的淋巴细胞占总数的 0%-10% 之间，判定为阴性反应。" },
+                    { q: "下列有关不完全抗体抗人球蛋白试验的论述不正确的是", a: ["抗人球蛋白试验是检测游离 IgM 抗体最有效的首选方法", "直接试验是检测红细胞表面是否结合抗体", "间接试验是检测游离血清中的抗体", "间接试验多用于检测母体意外抗体", "抗人球蛋白试验又称 Coombs 试验"], c: 0, desc: "IgM属于多价完全抗体，在盐水介质中就能直接凝集红细胞。抗人球蛋白试验主要针对不完全抗体（IgG类）的测定。" },
+                    { q: "盐水介质交叉配血的主要、致命的临床缺点是", a: ["敏感性过高", "无法检测受者体内结合的 IgG 不完全抗体，易出现假阴性漏检", "检测时间长，不适合急诊", "实验重复性较差", "操作过于复杂繁琐"], c: 1, desc: "盐水介质由于缺乏促进机制，无法使单体微小的IgG类不完全抗体在体外搭桥凝集，会导致这些抗体被漏检而产生严重溶血反应。" },
+                    { q: "关于主次侧交叉配血, 说法正确的是", a: ["主侧配血是为了检测供者血清中是否具有针对受者红细胞的抗体", "主侧配血是为了检测供者血清中是否有不规则抗体", "次侧配血是为了检测供者红细胞上是否具有相应抗原", "主次侧配血是为了检测供受者之间是否 ABO 和 Rh 同型", "主侧配血是为了检测受者血清中是否具有针对供者红细胞的意外抗体"], c: 4, desc: "主侧配血是拿“受者的血清（浆）”与“供者的红细胞”混合。旨在保证输入的供者细胞不会被受者血清中的抗体攻击溶解。" },
+                    { q: "目前我国临床输血实验室最普及、最实用的交叉配血方法是", a: ["白蛋白介质法", "酶处理法", "微柱凝胶过滤法", "盐水普通介质法", "聚凝胺（Polybrene）法"], c: 4, desc: "凝聚胺法不仅能高敏感地检测出IgG类不完全抗体，且全过程仅需5-10分钟，是公认最快速实用的配血技术。" },
+                    { q: "供者红细胞为B型, 受者血清为O型, 交叉配血时会出现的反应是", a: ["主侧管发生强凝集, 次侧管不凝集", "主侧管发生溶血, 次侧管不溶血", "主侧管不凝集, 次侧管发生凝集", "主侧管和次侧管均发生凝集", "主侧管不凝集, 次侧管不凝集"], c: 0, desc: "主侧：受者O型血清中含有强抗-B，与供者B型细胞强凝集。次侧：受者O型细胞上没有B抗原，不与供者B型血清（含抗-A）反应，故不凝集。" },
+                    { q: "临床怀疑血小板输注无效(PTR)时，以下哪项检查对明确免疫性诊断和处理无益", a: ["配合型血小板交叉配型输注", "受者体内血小板 HLA 抗体筛查", "血小板膜表面糖蛋白含量的定量检测", "不规则抗体特异性鉴定", "血小板 HPA特异性抗体检测"], c: 2, desc: "血小板膜表面受体糖蛋白含量的测定主要用于血小板功能障碍或无力症的诊断，对排除异体抗体介导的PTR没有指导意义。" },
+                    { q: "使用经典试管法进行血型鉴定和交叉配血时, 以下哪种操作是不规范、不正确的", a: ["配制待检者红细胞悬液浓度为 2% ~ 5%", "严格控制标本与抗体试剂的比例, 避免比例不均导致假阴性", "离心速度常规设定为 1000 ×g (或约 3400rpm), 离心时间 15 秒", "滴加时应先加血清或试剂血浆, 再加待检红细胞悬液", "如果怀疑存在弱凝集反应, 应将离心时间大幅延长到 3 分钟以上以促使凝集"], c: 4, desc: "离心时间过长（如3分钟）会把红细胞死死甩成硬块，导致在摇匀时产生无法散开的假阳性硬团块，绝不可盲目延长离心。" },
+                    { q: "下列哪项检查方法不属于临床常规的HLA抗体检测方法", a: ["补体依赖细胞毒试验(CDC)", "单抗原磁珠流式细胞荧光术(Luminex)", "酶联免疫法(ELISA)", "流式细胞仪检测术", "酶联免疫斑点检测术(ELISPOT)"], c: 4, desc: "ELISPOT主要用于在单细胞水平检测特定细胞因子的分泌，不作为抗HLA体液同种抗体临床筛查鉴定的方法。" },
+                    { q: "简易致敏红细胞血小板血清学技术(SEPSA)不适用于下列哪项检测", a: ["红细胞意外抗体常规筛查", "血小板药物依赖性抗体检测", "血小板同种抗体筛查", "血小板交叉配合相容性试验", "血小板特异性抗原(HPA)鉴定"], c: 0, desc: "SEPSA专门用来检测血小板抗原抗体结合及配型；红细胞意外抗体的检测直接采用红细胞Coombs或凝胶法进行。" },
+                    { q: "在器官移植配型中，目前公认分辨率最高、最准确的 HLA 分型技术是", a: ["预处理淋巴细胞分型", "微量淋巴细胞毒试验", "分子生物学基因分型技术", "纯合子细胞混合培养分型", "抗球蛋白-微量淋巴细胞毒试验"], c: 2, desc: "基因分型（PCR-SBT, 高通量NGS）可以直接提供碱基对级别的精确多态性解析，是公认最准确的技术。" },
+                    { q: "微柱凝胶过滤法进行血型鉴定和交叉配血的主要缺点在于", a: ["测试重复性不佳", "肉眼反应结果不易判断", "操作流程过于繁杂", "检测不完全抗体的灵敏度较差", "整个标本孵育和微柱卡慢速离心所需时间较长"], c: 4, desc: "微柱凝胶法最大的软肋是不能即刻离心出结果。通常需要经过 15-30 分钟恒温孵育以及专用的慢速长时间平稳离心，急诊抢救时受限。" },
+                    { q: "红细胞凝集强度有不同的等级, 试管法“2+”凝集强度的判断标准是", a: ["背景浑浊, 肉眼呈细小颗粒状, 显微镜下有细小凝块", "背景浑浊, 凝块较细小且多, 游离未凝集红细胞较多", "背景清晰, 凝块较小但数量较多, 游离红细胞极少", "背景清晰, 只有一个大凝块, 无任何游离红细胞", "背景清晰, 数个较大凝块和部分小凝块, 无游离红细胞"], c: 2, desc: "“2+”强度的特征即背景及上清完全清澈透明，红细胞凝成较小但分布密集的颗粒状凝块，肉眼极易辨认。" },
+                    { q: "在输血相容性检测试验中, 临床检验首先必须放在首位进行核准检查的是", a: ["主、次侧交叉配血", "意外抗体不规则筛查", "抗体效价测定分析", "精确的 ABO 与 RhD 血型鉴定", "不规则抗体特异性鉴定"], c: 3, desc: "血型鉴定是保证安全输血的重中之重。血型判断一旦发生错误，随后的任何检测和配血都将彻底失去防护意义。" },
+                    { q: "用于临床输血前兼容性检验的受血者血液标本，必须使用", a: ["指尖或耳垂毛细血管末梢血", "普通离心血浆", "静脉血标本", "完全不加抗凝剂的清澈血清", "动脉血标本"], c: 2, desc: "输血前检测要求血量充足、不发生红细胞物理破损溶血，必须通过真空穿刺静脉采血系统吸取静脉血标本。" }
+                ]
+            },
+            {
+                title: "第五章：血液制备与安全保存 (40题)",
+                questions: [
+                    { q: "我国单采血小板（机采）的标准保存温度、储存容器及有效期是", a: ["10~15℃, 玻璃容器, 7天", "$20\\sim24^{\\circ}C$, 专用特制透气密闭容器, 5天(必须持续轻缓振荡保存)", "$2\\sim6^{\\circ}C$, 塑料普通血袋, 35天", "室温静置, 普通容器, 24小时", "-18℃以下, 特制冰冻袋, 1年"], c: 1, desc: "血小板在低温（如$4^{\\circ}C$）下会迅速变性失活。必须置于$20\\sim24^{\\circ}C$常温并持续物理振荡以防止其黏附，保存期为5天。" },
+                    { q: "去白细胞悬浮红细胞是临床常用的血液成分, 其制备过程中去除白细胞的主要方法不包括", a: ["离心沉降法", "重力自然沉降法", "特制滤器过滤法", "吸附去除法", "多重生理盐水洗涤法"], c: 1, desc: "重力自然沉降法由于缺乏强大的物理阻截和密度差干涉，无法实现将微小的有核白细胞与红细胞进行高纯度分离。" },
+                    { q: "关于冷沉淀凝血因子（Cold Precipitate）, 正确的叙述是", a: ["副作用多, 临床极易出现急性输血反应", "制备繁琐导致价格十分昂贵", "含有人体全部种类的天然凝血因子", "输注容量较大, 易导致老年患者发生循环超负荷", "含有丰富的FVIII和纤维蛋白原，可用于治疗血友病A及纤维蛋白原缺乏症"], c: 4, desc: "冷沉淀是从新鲜冰冻血浆（FFP）中在低温解冻下析出的不溶沉淀。富含 Ⅷ 因子、纤维蛋白原、vWF 及 ⅩⅢ 因子，是血友病和凝血异常的常用治疗物。" },
+                    { q: "采用第三代高级白细胞过滤器制备去白细胞悬浮红细胞时, 红细胞的回收率应", a: ["\\(\\ge 80\\%\\)", "\\(\\ge 99.99\\%\\)", "\\(\\ge 90\\%\\)", "\\(\\ge 85\\%\\)", "\\(\\ge 98\\%\\)（或\\(\\ge 85\\%\\)且白细胞残留量极低）"], c: 4, desc: "根据白细胞过滤国家规范，制备后红细胞的回收率应 $\\ge 85\\%$（或 $\\ge 98\\%$ 伴随红细胞无物理破损，部分标准规定红细胞回收率 $\\ge 85\\%$，白细胞去除率 $\\ge 99.9\\%$）。" },
+                    { q: "患者, 女, 因大创伤引起急性大出血约 2500mL。在应用晶体液和胶体液补足血容量并手术成功止血的基础上, 为改善携氧，首选输注", a: ["普通冰冻血浆(FP)", "生理盐水洗涤红细胞", "去白细胞悬浮红细胞", "新鲜未经保存的异体全血", "新鲜冰冻血浆(FFP)"], c: 2, desc: "急性大出血患者在血容量纠正后，面临的主要矛盾是红细胞携氧能力急剧下降。此时应及时补充去白细胞悬浮红细胞。" },
+                    { q: "血液成分制备过程中, 为避免血小板在离心中激活、保证其活性, 制备富血小板血浆（PRP）的第一步离心条件应为", a: ["高转速、长时间离心", "低转速、长时间离心", "低转速、短时间轻缓离心", "任意普通转速和时间均可", "高转速、短时间离心"], c: 2, desc: "低速短时间离心（轻离心）能使红细胞沉降，而使密度较轻的血小板仍然悬浮于上层血浆中，从而制备高活性的富血小板血浆。" },
+                    { q: "洗涤红细胞国家质控标准中，其血浆清除率和红细胞回收率应分别为", a: ["\\(\\ge 98\\%\\), \\(\\ge 90\\%\\)", "\\(\\ge 98\\%\\), \\(\\ge 75\\%\\)", "\\(\\ge 90\\%\\), \\(\\ge 80\\%\\)", "\\(\\ge 98\\%\\), \\(\\ge 80\\%\\)（或\\(\\ge 70\\%\\)）", "\\(\\ge 80\\%\\), \\(\\ge 80\\%\\)"], c: 3, desc: "洗涤红细胞质量标准规定：血浆白蛋白清除率应 $\\ge 98\\%$（消除过敏原），红细胞回收率应 $\\ge 70\\%$（或 $\\ge 80\\%$）。" },
+                    { q: "洗涤红细胞的制备目的是去除血浆中的意外抗体、补体、多余钾离子等, 其核心制备技术是", a: ["高浓度高渗葡萄糖溶液洗涤离心", "0.9% 无菌生理盐水多次重复洗涤并离心沉降", "低离子强度缓冲液单次高速洗涤", "过滤器直接物理过滤后无菌分装", "抗生素稀释溶液无菌洗涤离心"], c: 1, desc: "通过使用大量的无菌生理盐水对离心聚集的红细胞进行3次以上的重悬洗涤与离心抛弃上清，能彻底去除原有的血浆成分。" },
+                    { q: "正常成年人的总血容量约相当于自身体重的", a: ["3% - 4%", "6% - 7%", "5% - 6%", "7% - 8%（或近 8%）", "4% - 5%"], c: 4, desc: "正常成人的血容量较为恒定，通常占体重的 7%-8% 左右（或每公斤体重约 70-80ml 血液）。" },
+                    { q: "患者, 女, 27岁, 因产后子宫收缩不良导致急性出血 1500mL, Hb急剧下降至 38g/L。该患者应紧急输注", a: ["悬浮红细胞", "普通冰冻血浆(FP)", "单采血小板制剂", "冷沉淀凝血因子", "辐照红细胞"], c: 0, desc: "当血红蛋白（Hb）明显低于 60g/L（患者已发生严重贫血缺氧），输注悬浮红细胞是快速提高携氧能力、拯救心肌的关键指征。" },
+                    { q: "关于临床粒细胞制剂（Granulocytes）的应用, 正确的学术观点是", a: ["粒细胞输注副作用极小, 临床应用非常安全", "目前临床已经广泛将单采粒细胞作为常规抗感染手段", "严重细菌感染患者主要依靠丙种球蛋白，不能配合粒细胞治疗", "由于严重的肺部并发症等输注副作用，目前多数情况下已被粒细胞集落刺激因子（G-CSF）和强效抗生素替代", "输注粒细胞应采取小剂量多频次原则"], c: 3, desc: "输入的异体粒细胞极易在受者肺部微血管滞留，引发极其严重甚至致命的肺部并发症（如TRALI）。目前临床使用指征被极度严格限制。" },
+                    { q: "冷沉淀凝血因子常用于临床治疗血友病A, 主要原因是其制剂内富含", a: ["凝血酶原、纤维蛋白原(Fg)和 vWF 因子", "凝血因子V、凝血因子I 和 Fg", "凝血因子VIII、纤维蛋白原(Fg)和 vWF 因子", "凝血酶、凝血因子VIII 和 vWF 因子", "凝血因子V、Fg 和 vWF 因子"], c: 2, desc: "冷沉淀中高度富集了不稳定凝血因子 FVIII、纤维蛋白原（FI）、血管性血友病因子（vWF）以及纤维稳定因子（FXIII）。" },
+                    { q: "临床成分血悬浮红细胞标签上，绝对不应该出现的内容是", a: ["采血血站名称及许可证号", "ABO 和 RhD 血型", "血液制剂条码及规范名称", "献血者个人真实姓名及身份证号", "血液采集日期与失效日期"], c: 3, desc: "为了严格保护献血者的个人隐私以及遵循伦理学规范，国家血袋标签严禁出现献血者的姓名和可识别的身份信息。" },
+                    { q: "临床使用含 CPDA-1 保存液的红细胞成分血液，其标准保存期为", a: ["35天", "20天", "42天", "21 天", "45天"], c: 0, desc: "CPDA-1（含有枸橼酸、磷酸盐、葡萄糖、腺嘌呤）保存液能使红细胞在$4^{\\circ}C\\pm2^{\\circ}C$下安全保存 35 天。" },
+                    { q: "制备洗涤红细胞时, 我国规范标准要求红细胞的回收率应", a: ["\\(\\ge 80\\%\\)", "\\(\\ge 70\\%\\)", "\\(\\ge 85\\%\\)", "\\(\\ge 90\\%\\)", "\\(\\ge 75\\%\\)"], c: 1, desc: "根据我国卫生行业标准，制备洗涤红细胞时，其红细胞的回收率必须达到 $\\ge 70\\%$ 以上。" },
+                    { q: "新鲜分离的液体血浆（常温或短期保存）中主要含有", a: ["血浆蛋白、仅含稳定的凝血因子", "全部种类的凝血因子及血浆蛋白", "稳定的凝血因子", "仅含血浆白蛋白", "血浆白蛋白、仅含不稳定的凝血因子"], c: 1, desc: "刚从全血中分离出的新鲜血浆，不仅富含全部血浆蛋白质，且所有凝血因子（包括极其不稳定的 FVIII、FV）均保持完整活性。" },
+                    { q: "冰冻红细胞在超低温保存和解冻复苏时，最常选用的细胞内抗冻剂是", a: ["二甲基亚砜(DMSO)", "聚乙二醇/羟乙基淀粉", "高分子海藻糖", "高浓度甘油（Glycerol）", "葡萄糖高渗液"], c: 3, desc: "高浓度甘油是红细胞最经典安全的冷冻保护剂，能有效防止红细胞在 $-80^{\\circ}C$ 以下结晶刺破膜，解冻后需洗脱去甘油。" },
+                    { q: "手工法制备的浓缩血小板(我国标准), 其保存环境和期限为", a: ["$22^{\\circ}C\\pm2^{\\circ}C$ 振荡条件下可保存 4 ~ 6 小时", "$22^{\\circ}C\\pm2^{\\circ}C$ 振荡条件下可保存 24 小时（或密封透气袋下 3-5 天）", "$4^{\\circ}C\\pm2^{\\circ}C$ 振荡条件下可保存 3 小时", "$22^{\\circ}C\\pm2^{\\circ}C$ 振荡条件下可保存 24 小时", "$4^{\\circ}C\\pm2^{\\circ}C$ 静态下可保存 24 小时"], c: 3, desc: "手工法制备的浓缩血小板由于是非全密闭单采提取，染菌风险高，保存期通常规定在 $22^{\\circ}C\\pm2^{\\circ}C$ 振荡下保存 24 小时。" },
+                    { q: "下列红细胞保养液中，特意引入了腺嘌呤（Adenine）以辅助合成ATP的是", a: ["纯血小板保存液(PAS)", "CPDA-1 保存液", "ACD-B 保存液", "CPD 保存液", "ACD-A 保存液"], c: 1, desc: "CPDA-1中的“A”代表腺嘌呤。它能作为合成腺苷酸的前体，显著促进保存期内红细胞ATP的维持，从而延长红细胞寿命至35天。" },
+                    { q: "临床输注血浆成分制品时，其绝对禁忌症是", a: ["对血浆蛋白发生过严重过敏反应(如曾发生过严重的过敏性休克)", "凝血因子发生轻度减少", "伴发严重的低蛋白血症", "轻度缺铁性贫血", "大手术后引起的血容量急性不足"], c: 0, desc: "若受血者对血浆中的某些天然蛋白（如抗IgA抗体者）有超敏性并发生过休克，输注异体血浆会带来即刻死亡风险，属于绝对禁忌。" },
+                    { q: "关于悬浮红细胞的成分构成, 下列说法最正确、最严谨的是", a: ["含有全血中全部的红细胞、一定量的白细胞、少量血浆和保存液", "含有全血中全部的红细胞、白细胞、血小板、血浆和保存液", "含有全血中全部的红细胞、血小板、一定量的白细胞、少量血浆和保存液", "含有全血中全部红细胞、一定量的白细胞和血小板、少量残留血浆和添加保存液", "含有全血中全部的红细胞、血小板、一定量的白细胞和少量血浆"], c: 3, desc: "悬浮红细胞是离心移去大部分血浆后，加入红细胞添加保存液重悬而成，内含原全血的全部红细胞、绝大部分白细胞和血小板残留，以及少量血浆。" },
+                    { q: "关于多媒体或网络媒介在无偿献血者招募工作中的宣传应用, 做法正确、积极的是", a: ["夸大献血的身体损害, 制造焦虑以迫使公众献血", "未经脱敏授权，直接在自媒体上曝光献血者的肖像与详细信息", "开展献血科学知识普及, 全面展示无偿献血社会正能量", "虚构紧急缺血或重伤抢救案例以吸引网民眼球", "故意透露高危血型献血者的隐私以引发社会话题讨论"], c: 2, desc: "互联网招募应坚守真实性、科学性与隐私保护原则，重点进行公益宣教和科学辟谣。" },
+                    { q: "红细胞保存液（保存液）在延长细胞寿命中起核心作用，但其不具备以下哪种作用", a: ["提供高能营养底物, 维持红细胞无氧糖酵解代谢", "高效抗凝, 阻止血液自发性物理凝固", "直接化学灭活标本中的各种潜在病毒, 保证输血安全", "补充高能磷酸基团，延长红细胞的体外存活期", "维持特定的 pH 缓冲值, 维持酸碱电荷平衡"], c: 2, desc: "红细胞保存液不含有任何可以直接杀灭或灭活乙肝、HIV等病毒的活性化学药物，病毒阻断主要靠源头筛查与核酸检测。" },
+                    { q: "为了彻底预防临床严重的“输血相关移植物抗宿主病（TA-GVHD）”，对于特殊患者最好选择输注", a: ["经高温和高压病毒灭活的红细胞", "0.9% 生理盐水多次洗涤红细胞", "浓缩红细胞制剂", "普通的去白细胞悬浮红细胞", "经紫外线或核素照辐处理的“辐照红细胞”"], c: 2, desc: "TA-GVHD是由血液成分中残留的有活性T淋巴细胞在受者体内植活并攻击受者器官所致。采用射线（如 $^{137}Cs$ 或 $^{60}Co$）进行“辐照”可选择性破坏T细胞的DNA，使其丧失分裂能力，是预防该致命病症的最有效手段。" },
+                    { q: "成分血制备中，适用于血浆及冷沉淀的“亚甲蓝（MB）光照病毒灭活技术”的作用机制是", a: ["通过产生超高温瞬时灭活病毒外壳蛋白", "特异性竞争抑制病毒逆转录酶的结合活性", "使用过滤柱吸附并机械阻截、滤除全部病毒颗粒", "亚甲蓝能特异嵌入病毒核酸双链，在可见光照射下发生光化学反应，导致病毒核酸断裂断链", "改变并溶解病毒包膜的脂质双分子层结构"], c: 3, desc: "亚甲蓝(MB)是一种光敏剂，能特异性结合于病毒的核酸段。在特定波长光照下，激活产生活性单线态氧，专一性破坏病毒核酸分子，从而使其失去感染力。" },
+                    { q: "抗凝血液在离心机高速沉降后会发生分层, 最贴近上层血浆底部的层面中主要富含", a: ["氧合红细胞", "还原红细胞", "血小板（以及白细胞层）", "小淋巴细胞", "成熟粒细胞"], c: 2, desc: "血液成分的比重：红细胞最大（1.090），血浆最小（1.025-1.030），血小板和白细胞介于其间。因此，血小板层最靠近上层的血浆底界。" },
+                    { q: "下列临床常用的血液成分制品中，由于低温下结构和活性极易发生不可逆破坏，绝对不宜进行冷冻保存的是", a: ["冷沉淀凝血因子", "新鲜冰冻血浆", "悬浮红细胞", "单采血小板", "全血"], c: 4, desc: "全血中含有多种对冻融极度敏感的细胞。如果不加特异性抗冻保护剂直接进行冰冻，解冻后红细胞会发生灾难性的物理大面积溶血破坏。" },
+                    { q: "在血浆病毒灭活工艺中，目前临床血站制备血浆时常用于灭活脂质包膜病毒的敏感无毒光敏物质是", a: ["高浓度 X 射线", "天然 $\\alpha$ 衰变射线", "短波紫外线(UVC)", "亚甲蓝（Methyl Blue / Methylene Blue）", "人工发出的高能 $\\gamma$ 射线"], c: 3, desc: "亚甲蓝（MB）光照病毒灭活法是我国血站对单人份新鲜冰冻血浆进行病毒灭活的最成熟标准工艺。" },
+                    { q: "在无偿献血者招募和宣教工作中, 下列哪项行为明显违反了国家法规和伦理规范", a: ["向献血者详细讲解献血后的日常膳食与科学调理注意事项", "向社会大众科普“适量献血对身体无害”的医学常识", "广泛宣传无偿献血的社会公益性及人道主义无私互助属性", "向商业第三方机构高价售卖和输出献血者的身份证、电话及健康信息", "展现无偿献血者救人一命的社会崇高价值"], c: 3, desc: "《中华人民共和国献血法》和保密伦理严格规定：献血者的个人隐私、体检结果、联系方式等信息属于绝对机密，严禁任何商业化泄漏或售卖行为。" },
+                    { q: "临床制备辐照红细胞或辐照血小板制剂时，其靶向照射通常使用", a: ["高能中子射线", "$\\gamma$ 射线（或高能 X 射线）", "低穿透力 $\\beta$ 电子流", "高电荷 $\\alpha$ 粒子射线", "超声空化高能波"], c: 1, desc: "辐照血液通常采用钴-60 ($^{60}Co$) 或铯-137 ($^{137}Cs$) 放射源产生的具有极强穿透力的 $\\gamma$ 射线或高能X射线，照射剂量通常为 25-30 Gy。" },
+                    { q: "利用机采单采血小板采集袋所制备的单采血小板，其制剂的标准容量常处于", a: ["400mL 全血制备浓缩血小板容量为 50 ~ 76mL", "400mL 全血制备浓缩血小板容量为 25 ~ 38mL", "400mL 全血制备浓缩血小板容量为 38 ~ 57mL", "200mL 全血制备浓缩血小板容量为 15 ~ 25mL", "200mL 全血制备浓缩血小板容量为 25 ~ 30mL"], c: 0, desc: "在手工法浓缩血小板制备中，400ml全血提取的血小板，其终体积规范标准一般处于 50-76 ml 范围内。" },
+                    { q: "红细胞和全血在 $4^{\\circ}C\\pm2^{\\circ}C$ 的体外保存液配方，其研发和配制的最核心优化依据是", a: ["保证所有有核白细胞及全部凝血因子的活性完好", "维持血小板在体外的最大存活率和释放活性", "维持中性粒细胞和淋巴细胞在体外的生存期", "最大化维持红细胞在保存期末的存活率及生理携氧释氧能力", "保证血浆不稳定凝血因子的滴度不发生自然衰减"], c: 3, desc: "全血及红细胞保存液的配比（如枸橼酸盐、葡萄糖、腺嘌呤等），均是为了最大限度抑制红细胞无氧代谢的衰退，减少保存期红细胞溶血破裂。" },
+                    { q: "在我国血站质量标准中，新鲜冰冻血浆(FFP)和普通冰冻血浆(FP)在标准超低温 $-20^{\\circ}C$ 以下的保存期分别为", a: ["3年 ; 3年", "1年 ; 10年", "1年 ; 3年（或最高 4 年）", "1年 ; 1年", "1年 ; 4年（或 5 年）"], c: 4, desc: "新鲜冰冻血浆（FFP，含有全部不稳定因子）保存期为1年；超过1年后活性部分衰退，转为普通冰冻血浆（FP），保存期可延长至4-5年。" },
+                    { q: "临床上，对未解冻的单人份血浆成分进行病毒灭活，最安全普及的物理/化学联合方法是", a: ["利用高剂量 $\\gamma$ 射线进行穿透性物理灭活", "直接利用短波紫外线照射", "利用强穿透 $\\alpha$ 粒子", "利用临床高能诊断高剂量 X 射线", "添加微量亚甲蓝结合特定波长可见光进行光敏灭活"], c: 4, desc: "亚甲蓝光化学法（MB-photodynamic）是我国血浆病毒灭活的标准方案，对脂质包膜病毒（如HBV, HCV, HIV）有极佳的杀灭效果。" },
+                    { q: "临床制备并分装出的“洗涤红细胞”，其体外保存条件和有效期，与下列哪项一致", a: ["新鲜冰冻血浆(FFP)", "冷沉淀凝血因子", "常规悬浮红细胞的保存（即在 $4^{\\circ}C\\pm2^{\\circ}C$ 下，但由于开放制备通常限 24 小时内输注完毕）", "单采血小板的常温保存", "经射线辐射后的辐照红细胞"], c: 2, desc: "洗涤红细胞在洗涤后必须重悬于保存液中，其物理储存温度与普通红细胞一致，为 $4^{\\circ}C\\pm2^{\\circ}C$。由于洗涤过程多为半开放操作，通常要求在 24 小时内输用。" },
+                    { q: "关于去白细胞悬浮红细胞, 下列哪项说法是不正确的", a: ["与普通全血相比, 输注去白红细胞可明显降低异体白细胞引起的非溶血性发热反应", "中重度贫血患者输注去白悬浮红细胞的红细胞携氧纠正效果优于输注等体积全血", "去白悬浮红细胞在制备中由于经过了红细胞洗涤，因此不含有任何微量的血浆蛋白", "与输全血相比, 输注去白悬浮红细胞可明显减小循环超负荷（TACO）的风险", "去白悬浮红细胞中积存的电解质钠、钾、钙以及氨的含量显著高于全血"], c: 4, desc: "悬浮红细胞中绝大部分血浆已被移去，取而代之的是科学配比的添加保存液，因此其钠、钾、氨及钙等由于代谢积存产物的浓度明显低于未经处理的全血标本。" },
+                    { q: "目前采用专用机采单采血小板设备直接从献血者循环中提取的单采血小板，其每袋的标准容量通常为", a: ["125 ~ 175mL", "250 ~ 275mL", "250 ~ 300mL", "125 ~ 250mL", "125 ~ 200mL"], c: 2, desc: "我国《献血者健康检查要求》及血站标准规定：一个治疗量的单采血小板，其最终制剂的体积标准通常应在 250ml - 300ml 之间。" },
+                    { q: "现代输血医学倡导的成分输血，其血液各组分（红细胞、血小板、血浆、粒细胞）在制备中主要是根据它们的何种物理学差异实现高纯度分离的", a: ["化学分类与表面受体差异", "各分子含水量与化学浓度差异", "各细胞及分子在显微镜下的几何大小差异", "各细胞及蛋白分子的生理生物学功能差异", "各细胞组分与血浆蛋白分子之间的“比重（密度）差异”"], c: 4, desc: "血细胞及血浆蛋白的比重不同（红细胞 1.090，粒细胞 1.080，淋巴细胞 1.060，血小板 1.030，血浆 1.026）。通过设置特定的离心力和转速，比重不同的成分会沉降在不同层面，从而实现成分分离。" },
+                    { q: "关于血浆的生物学性质及成分描述，下列哪项是不正确、不科学的", a: ["血浆中占比最大的固体溶质组分是血浆蛋白质", "血浆蛋白质中主要由白蛋白、各免疫球蛋白、补体以及各种天然凝血因子构成", "在临床输血中，血浆成分应当作为常规、首选的营养补充剂来为虚弱患者补充白蛋白和能量", "血浆是由大部分的水（约占 90%-92%）以及各种可溶性固体化学成分混合而成的复杂胶体", "血浆是指去除了血液中所有有形红、白细胞及血小板之后的游离液体成分"], c: 2, desc: "血浆中含有各种凝血因子，临床血浆输注的首要和唯一指征是纠正凝血功能障碍。严禁将宝贵的血浆作为普通的“营养扩容剂”或“白蛋白补充液”滥用。" },
+                    { q: "冷沉淀凝血因子的制备是基于新鲜冰冻血浆在 $4^{\\circ}C$ 融化时的特殊不溶性，其析出离心后收集的沉淀物主要成分不包括", a: ["血管性血友病因子(vWF)", "纤维蛋白原(I 因子)", "天然不稳定的凝血因子 V", "纤维稳定因子(XIII 因子)", "不稳定凝血因子 VIII"], c: 2, desc: "凝血因子V（FV）是一种高度不稳定的凝血因子，但它并不富集和沉淀于低温析出的冷沉淀中，冷沉淀的主要活性成分为 FVIII、FI、vWF 和 FXIII。" }
+                ]
+            },
+            {
+                title: "第六章：临床输血工作程序 (25题)",
+                questions: [
+                    { q: "男, 68岁。左脚腕扭伤后局部迅速爆发皮下重度血肿且出血不止。经查该患者为重度甲型血友病(血友病A)。目前为抢救该患者的关节腔大出血，在浓缩 FVIII 制剂不可得的紧急情况下, 可优先选择输注", a: ["去白细胞悬浮红细胞", "0.9% 生理盐水洗涤红细胞", "冷沉淀凝血因子（或新鲜冰冻血浆）", "新鲜全血", "普通保存冰冻血浆"], c: 2, desc: "血友病A是由于体内特异性缺乏凝血因子 FVIII 导致的。冷沉淀中含有极高浓度的 Ⅷ 因子，是浓缩Ⅷ制剂缺乏时的首选替代治疗成分。" },
+                    { q: "关于临床红细胞交叉配血试验（Cross-matching）的规范化描述, 正确、科学的是", a: ["配血非常顺利，再次输用同一献血者的血液时无须再次交叉配血", "交叉配血旨在判定受血者与献血者的红细胞和血清（浆）之间是否发生特异相容，避免急性溶血", "常规配血仅包括主侧配血, 无需进行次侧配血", "手工法制备的浓缩血小板在输注前绝对不需要做任何形式的交叉配血", "若交叉配血结果显示轻微、极弱的凝集（如 0.5+），在急救时也可勉强批准输注"], c: 1, desc: "配血是发现正反定型遗漏的不规则意外抗体（如抗-E，抗-D，抗-K）的底线屏障，主侧（受者血清+供者红细胞）不配相合绝对严禁输注。" },
+                    { q: "下列临床常用的各种血液成分制品中, 在输注前绝对不得在水浴箱中加温输注的是", a: ["去白细胞悬浮红细胞", "洗涤红细胞悬液", "单采及浓缩血小板制剂", "新鲜冰冻血浆(FFP)", "冷沉淀凝血因子"], c: 2, desc: "血小板对温度极为敏感。任何高于常温或温水复温的操作都会使血小板瞬间发生不可逆的物理激活聚集并丧失止血活性，必须在常温（$20-24^{\\circ}C$）直接输注。" },
+                    { q: "在医院临床医疗中，规范的《临床输血申请单》的填写、评估及申请签字主体必须是", a: ["病区值班护士", "输血科（血库）专职技术人员", "患者的经治医师（或主管医师）", "医院专门的病案行政管理人员", "患者法定直系家属代表"], c: 2, desc: "《临床输血技术规范》规定：申请输血必须由经治医师认真逐项填写《临床输血申请单》，由主治医师及以上级别医师核准签字签字方可送达输血科。" },
+                    { q: "输血科在接收标本时，下列哪项不属于临床科室送达的不合格血液标本", a: ["标本试管表面缺乏任何受试者姓名、病案号等标识, 或不具备唯一性识别条码", "采血管发生物理破损、开裂或管盖脱落导致血液外溢", "抗凝或非抗凝管内采集的血液标本量充足, 且血浆层清澈透明无任何溶血现象", "标本血浆层呈现严重、不透明的乳白色（重度乳糜血）", "标本采出后在常温下放置长达 12 小时以上才送达科室"], c: 2, desc: "无溶血、标本量充足（通常要求3-5ml）、标识完整唯一的静脉血标本是最标准的合格血液标本。" },
+                    { q: "临床实验室在接收血浆成分制品的输注配发申请前, 其最核心的检测项目是", a: ["必须测定并复核受血者的 ABO 正反定型以及 RhD 血型", "开展受者与供者血浆之间的血小板同种抗体筛查", "必须加做受血者全套凝血功能指标测定", "受血者肝功能及肾功能复核", "加做受血者血液常规血细胞计数测定"], c: 0, desc: "虽然血浆不含有红细胞，但血浆中含有大量的抗-A、抗-B天然不完全抗体。如果ABO血型输注错误，输入的血浆抗体会迅速溶解受血者自身的红细胞，产生急性溶血，因此必须核对ABO血型。" },
+                    { q: "根据国家《临床输血技术规范》，二级及以上医院输血科（血库）的安全储血量要求应为", a: ["不少于 1 天的常规医疗用血量", "不少于 3 天的常规医疗用血量", "不少于 5 天的常规医疗用血量", "不少于 7 天的常规医疗用血量", "无任何硬性法规要求, 科室按每日临时消耗量随用随取"], c: 1, desc: "规范明确要求：医院输血科（血库）应当根据临床用血需要，保持不少于 3 天常规医疗用血的合理安全储备量，防范突发灾害及大出血抢救风险。" },
+                    { q: "男, 40岁。颈部恶性肿瘤准备手术。该患者既往曾因多次接受输血发生过严重的非溶血性发热反应(FNHTR)。现患者中度贫血需手术备血, 临床首选应向血站申请并输配", a: ["去白细胞悬浮红细胞", "普通悬浮红细胞", "异体全血", "生理盐水多次洗涤红细胞", "超低温保存冰冻红细胞"], c: 0, desc: "FNHTR主要是由血液中残留的有形白细胞释出的细胞因子及白细胞HLA同种免疫反应介于的。选择白细胞去除率 $\\ge 99.9\\%$ 的“去白红细胞”是预防此反应的金标准。" },
+                    { q: "下列哪项关于输血病历档案及记录的管理中，不属于国家强制要求必须载入病历保存的内容是", a: ["主管医师下达的输血医嘱及临床评估记录", "经医患双方签字确认并盖章的《输血治疗知情同意书》", "输血科配发并签字的《交叉配血报告单》原件", "无偿献血者的个人家庭住址、身份证号及真实联系电话", "输血前、输血开始时、输注中以及结束后 15 分钟的患者生命体征监测记录"], c: 3, desc: "病历中需要保留输血的完整临床和检验轨迹，但出于保密法案规定，严禁将献血者的详细个人联系方式及隐私信息泄露或载入患者的公共病历中。" },
+                    { q: "在常规输血治疗中，护士在病房执行输注时的速度控制原则是", a: ["全程以最快流速快速输注, 防止血液在输液管中凝固", "为了安全，全程必须以极慢流速缓慢输注", "先慢后快。最初 15 分钟内必须以 1-2ml/min 的极慢流速输注并由护士床旁严密观察；无异常后再调快流速", "先快后慢。最初 15 分钟内快速冲入以迅速提升血红蛋白，随后缓慢维持", "没有任何指南限制, 护士可根据患者的个人主观喜好流速进行调整"], c: 3, desc: "输血开始后的前 15 分钟是急性溶血反应、超敏休克、重度热源反应发生的高峰期。必须遵循“先慢后快、前15分钟床旁严密监护”的铁律。" },
+                    { q: "除抢救大出血等极其紧急的特殊情况外, 临床医师申请输血时，其签署和申请医师的最低执业资质级别要求为", a: ["初级执业住院医师", "主治医师及以上级别", "副主任医师及以上级别", "主任医师级别", "必须是输血科主任或大内/大外科主任"], c: 1, desc: "《临床输血技术规范》规定：申请输血应由经治医师认真填写，由主治医师及以上级别医师核准签字，方可向输血科提报申请。" },
+                    { q: "对于需要长期、反复依赖输血治疗的重型地中海贫血或镰状细胞贫血患者, 输血医学倡导的红细胞匹配输注方式是", a: ["随意调配同型红细胞直接输用", "开展除 ABO 外的 Rh 系统（C, c, E, e）表型高匹配度的红细胞精准输注", "为了绝对安全，一律仅输注 O 型洗涤红细胞", "一律选用罕见的 RhD 阴性红细胞输注", "无需考虑任何复杂的抗原表型，只要体外盐水或凝聚胺配血相合即可输用"], c: 1, desc: "长期反复输血极易产生针对次要红细胞血型系统（特别是免疫原性极强的 Rh 系统 C, c, E, e 抗原）的同种不规则抗体，引发输血无效。提倡从首次输注起就推行同表型（C,c,E,e）精确匹配输注。" },
+                    { q: "融化复温后的冰冻血浆制剂，如果置于 $2\\sim6^{\\circ}C$ 的冰箱中保存时，其最迟必须输注完毕的时限为", a: ["12 小时内", "24 小时内", "48 小时内", "72 小时内", "一周内"], c: 1, desc: "血浆解冻后，其中的不稳定凝血因子（如 FVIII, FV）活性会随时间推移在 $4^{\\circ}C$ 下发生快速不可逆的自然衰减。为保证止血活性，必须在解冻后 24 小时内输注完毕。" },
+                    { q: "患者大失血面临生命危险抢救时，若送检的交叉配血标本存在中度脂血或肉眼溶血, 下列处理方案中正确的是", a: ["任意紧急情况下均可直接忽略，正常配血发血", "只有在受血者 ABO 正、反定型复核结果完全一致、且抗体筛查阴性、配血相合的前提下，为抢救生命可先发红细胞，同时重新采血复查", "仅重度脂血标本可以使用，任何溶血标本在配血中一律不可使用", "仅溶血标本可以使用，脂血标本由于干扰光电判定一律严禁使用", "直接由经治医师口头批准签字，输血科技术人员即可免除所有复核配血步骤直接发血"], c: 1, desc: "标本溶血会干扰对配血终点溶血的判定。但在生命垂危急救的底线下，若血型定型明确一致、且配血相合，可先紧急发红细胞抢救，同时必须立刻重新采血进行核准复查。" },
+                    { q: "临床因单一特异性凝血因子严重缺乏（如血友病B缺乏FIX）引起活动性出血时, 临床首选的补给制剂是", a: ["新鲜冰冻血浆(FFP)", "冷沉淀凝血因子制剂", "相应的特异性纯化凝血因子浓缩制剂（如高纯度 FIX 浓缩物）", "同型新鲜全血", "单采血小板"], c: 2, desc: "尽管血浆和冷沉淀含有这些因子，但它们容量大、纯度低，易引发循环超负荷。首选高纯度、小容量、因子明确的浓缩制剂进行靶向补充。" },
+                    { q: "交叉配血主侧管（受者血清+供者红细胞）发生肉眼可见的凝集或溶血不合时, 实验技术人员首先应当立即核实、排查的非抗体非技术因素是", a: ["使用的生理盐水或试剂是否已过期失活", "是否存在受血者患者身份识别发生错误，或者送检标本的试剂管条码标识贴错、移位", "检测人员的操作手法和离心速度读数是否发生失误", "血液制剂在运送中是否存在储存温度失控", "血制品的血袋是否存在肉眼可见的渗漏开裂"], c: 1, desc: "交叉配血主侧不合，最常见且最致命的隐患是“抽错了患者标本”或“标本贴错了条码（张冠李戴）”，这会导致灾难性的血型不合输血。必须第一时间核准身份标识。" },
+                    { q: "关于临床血小板成分血液的“预防性输注”原则，下列说法正确、科学的是", a: ["只要受试者血小板计数低于 \\(100\\times10^9/L\\)，就必须进行常规预防性输注", "为了防止任何隐患，可随意使用，无需任何临床限制", "不可滥用。必须结合受血者的出血倾向、发热感染情况、侵入性手术计划等临床指标进行综合考量", "所有准备接受手术的患者，不论其血小板数高低，术前均需常规输用机采血小板", "凡是恶性肿瘤患者接受化疗后，必须常规预防性输注血小板以防止骨髓抑制"], c: 2, desc: "血小板属于高度免疫原性制品，滥用极易引发 PTR。临床只有在血小板低于 $10\\times10^9/L$（无感染）或 $20\\times10^9/L$（伴发热、感染）伴严重出血危险，或手术前需维持特定水平时，方才准予预防性补充。" },
+                    { q: "全血、去白细胞悬浮红细胞自输血科（血库）标准的专用储血冰箱中取出发出后, 临床病房必须在多长时限内开始并输注完毕", a: ["自出库起 2 小时内必须输注完毕", "自发出起必须在 4 小时内全部输注完毕", "自发出起必须在 6 小时内全部输注完毕", "自发出起必须在 8 小时内全部输注完毕", "自发出起必须在 12 小时内全部输注完毕"], c: 1, desc: "《临床输血技术规范》规定：血液从冷藏环境取出后在室温下停留极易滋生细菌或发生变性。必须在发出后 30 分钟内开始输注，并在 4 小时内全部输注完毕。" },
+                    { q: "在医院输血治疗程序中，哪个环节最核心、最集中地体现了对患者知情权、选择权和个性化自主权的尊重", a: ["临床医师对输血指征进行科学的病理学评估", "输血科开展高精度的抗体筛查和配血试验", "根据不同的贫血病因选择针对性的血液制品成分", "精确计算输用红细胞或血小板的剂量和流速", "主管医师详细告知风险并由患者或其法定监护人签署《输血治疗知情同意书》"], c: 4, desc: "签署《输血知情同意书》是患者在充分了解输血必要性、潜在不良反应和替代治疗方案的前提下，自主决定是否接受异体血液的核心伦理和法律保障。" },
+                    { q: "在抢救大失血的紧急情况下，对于有生育潜力的年轻女性患者，在血型未知、配血未出时，紧急输红细胞应优先选择", a: ["O型 RhD 阳性红细胞", "O型 RhD 阴性红细胞", "AB型 RhD 阳性红细胞", "AB型 RhD 阴性红细胞", "任意 RhD 血型的大剂量全血"], c: 1, desc: "有生育潜力的女性受血者如果输入了 RhD 阳性血，极易致敏产生抗-D。在后续妊娠时，抗-D会通过胎盘引发极其严重的流产或新生儿重度溶血。因此，必须选用珍贵的 O 型 RhD 阴性红细胞进行生命抢救。" },
+                    { q: "红细胞成分制品输注的主要、最核心的临床生理作用是", a: ["补充血浆丢失的水分和维持胶体渗透压", "提高机体体液免疫和抗感染能力", "迅速提高外周血液的携氧及向组织释氧的能力", "纠正因血小板大幅减低带来的出血不止倾向", "提高血液中各种天然凝血因子的滴度"], c: 2, desc: "红细胞内含大量的血红蛋白。输红细胞的核心靶生理效应是迅速纠正组织缺氧、提升外周血对脏器的携氧供氧能力。" },
+                    { q: "在主管医师执行输血知情同意的告知与医患沟通中，不包括以下哪项内容", a: ["患者当前病因导致的输血必要性及输血指征评估说明", "输血前各项病毒指标（如 HBV, HIV）的检测结果告知", "患者既往曾接受过的其他非相关外科大手术历史", "输注异体血面临的不良反应及输血传播感染风险", "临床自体输血等替代方案的利弊告知与选择"], c: 2, desc: "患者以往做过与本次输血相容性、凝血功能或大出血不相关的其他既往史（如骨折钢针固定等），不属于本次输血知情同意专一告知的必备要素。" },
+                    { q: "受血者红细胞成分输注前的兼容性检验检测项目中，不包括以下哪项", a: ["精确测定受血者的 ABO 正反定型", "测定受血者的 RhD 血型", "测定受血者当前的空腹血糖及糖化血红蛋白浓度", "对受血者血清进行不规则意外抗体筛查", "开展主、次侧双向交叉配血试验"], c: 2, desc: "血糖及糖化血红蛋白是糖尿病或代谢监控指标，与输红细胞前的免疫学兼容性检验没有因果关联。" },
+                    { q: "当受血者发生重度创伤大出血抢救，其 ABO 正反定型结果不相符（且原因一时查不准）需紧急输注血小板时, 临床配血优先选择的血小板血型是", a: ["A型机采血小板", "B型机采血小板", "O型机采血小板", "AB型机采血小板", "任意血型的血小板均可无条件大量输入"], c: 3, desc: "AB型血小板表面不含有 A、B 抗原，其血浆层中也不含有任何抗-A、抗-B天然不完全抗体。在受者血型不详、正反定型不符的急救状态下，AB型是最安全的万能血小板供体。" },
+                    { q: "在成分血配发和出库核对时，输血科技术人员发现下列哪种情况，该袋血液一律严禁发出", a: ["配发血袋的实际标示量比临床申请单上的申请量略微多出 20mL", "血袋表面的条码及各项血型标签字迹工整、清晰无破损", "血浆成分血液制剂的血浆层呈现严重的、不透明乳白色混浊（重度乳糜血）", "悬浮红细胞的下层红细胞层呈现健康的暗红色", "该袋血液的有效期还剩下最后 3 天时间"], c: 2, desc: "重度乳糜血浆中富含大量的游离乳糜微粒，极易引发受血者发生严重的物理性栓塞、超敏反应或严重的微循环障碍，国家规范规定重度乳糜血一律属于不合格制剂，禁止发出。" }
+                ]
+            },
+            {
+                title: "第七章：临床输血应用 (25题)",
+                questions: [
+                    { q: "手术患者既往因多次接受输血导致非溶血性发热反应(FNHTR)者, 本次手术备血最适宜选用", a: ["异体全血", "超低温冷冻红细胞", "普通浓缩红细胞", "去白细胞悬浮红细胞（少白红细胞）", "少浆血"], c: 3, desc: "去除白细胞能清除99.9%以上的异体有核白细胞，从源头上切断产生发热因子和HLA致敏的途径，是FNHTR患者的最佳选择。" },
+                    { q: "在输血临床工作中，为了彻底预防致死性的“输血相关移植物抗宿主病（TA-GVHD）”，对免疫抑制患者采取的最合理措施是", a: ["仅输注保存不超过 3 天的新鲜全血", "一律输注新鲜采出的红细胞、粒细胞和血小板", "拒绝为任何伴有先天性免疫缺陷的个体提供输血治疗", "尽量在患者直系亲属（如父母、子女、同胞）之间进行相互输血", "输注经过白细胞滤器过滤、且经过射线照辐破坏有核细胞DNA的辐照血液成分"], c: 4, desc: "TA-GVHD常见于免疫低下患者或接受直系亲属（由于HLA单倍型半相合导致受者无法识别并清除供者淋巴细胞）输血者。通过“辐照”使淋巴细胞丧失增殖活性是预防该病的首要金标准。" },
+                    { q: "在成人输注治疗中，每标准输注 1U 的悬浮红细胞, 理论上一般可以使患者外周血中的血红蛋白（Hb）提高", a: ["12g/L", "2g/L", "5g/L", "1g/L", "8g/L"], c: 2, desc: "在正常体型的成人（体重约60kg）中，每输注1单位（1U）红细胞，能提高 Hb 约 5g/L 左右（输2U约提高10g/L）。" },
+                    { q: "关于早产儿和新生儿输注红细胞制剂的叙述, 不正确的是", a: ["为了防止红细胞变性, 输注红细胞制剂前必须置于大功率水浴箱中进行全面复温升温处理", "绝大多数情况下属于微量小量输血, 常规剂量为 10 ~ 20ml/kg", "应尽可能选用保存期短、去除白细胞的红细胞，必要时可进行洗涤或辐照处理", "伴有严重心肺合并症的急性缺氧患儿, 若血红蛋白浓度低于 120g/L 就应果断考虑输红细胞", "新生儿输血极易导致循环超负荷，不宜选用容量庞大的全血"], c: 0, desc: "新生儿输红细胞通常只需室温自然复温。严禁使用普通或大功率水浴箱对少量红细胞进行粗暴的热水加热，否则极易引发大面积物理溶血或红细胞变性。" },
+                    { q: "在体外标准环境 $4^{\\circ}C\\pm2^{\\circ}C$ 下保存超过 3 天以上的红细胞血液成分制品，一般不会传播哪种病原体", a: ["丙型肝炎病毒(HCV)", "人类免疫缺陷病毒(HIV)", "乙型肝炎病毒(HBV)", "戊型肝炎病毒", "梅毒螺旋体（Treponema Pallidum）"], c: 4, desc: "梅毒螺旋体对低温极其敏感。在 $4^{\\circ}C$ 的抗凝冷藏血液中保存超过 72 小时（3天）以上，其传染性会完全丧失。因此冷藏3天以上的红细胞没有梅毒传播活性。" },
+                    { q: "女, 有多次输血史和多胎妊娠史。在再次接受红细胞输注过程中突然发生发热反应, 体温从 36.8℃ 骤升至 $38.3^{\\circ}C$。为了初步查明并明确发热反应的免疫学因果原因，实验室可优先检测患者血清中的", a: ["红细胞自身抗体", "红细胞同种特异抗体", "针对白细胞特异抗原（HLA或HNA）的抗体", "血浆白蛋白抗体", "血小板特异同种抗体"], c: 2, desc: "多次输血和妊娠史会让患者体内产生针对异体白细胞 HLA 或 HNA 的同种抗体。输血时，这些抗体攻击输入的供者白细胞，释放致热原导致发热反应。" },
+                    { q: "根据我国血液制品标准，用于制备 1 单位（1U）冷沉淀凝血因子所消耗的无偿献血新鲜全血量为", a: ["300ml", "500ml", "100ml", "400ml", "200ml"], c: 3, desc: "在我国，制备1单位（1U）冷沉淀是由 400ml 新鲜全血离心分离出的血浆成分在低温下精制析出的沉淀物。" },
+                    { q: "全血采集后为了保留和保留最大活性的不稳定凝血因子（如 FVIII, FV），必须在采血后几小时内制备成新鲜冰冻血浆(FFP)", a: ["10-12小时内", "24小时内", "48小时内", "6-8小时内", "72小时内"], c: 3, desc: "不稳定凝血因子在室温或普通低温下衰减极快。必须在血液采出后的 6-8 小时内完成离心并将血浆快速置于 $-30^{\\circ}C$ 以下速冻，才能保证因子 VIII 的活性。" },
+                    { q: "关于临床红细胞输注的基本原则和决策叙述, 不正确的是", a: ["临床应当充分权衡患者输血的救命利益与输血反应的潜在风险", "应综合评估患者的年龄、创伤流血速率、手术失血预计量、代偿能力及缺氧表现等", "由于不同患者对组织氧的需求存在显著的病理生理个体差异, 应坚持具体情况具体分析", "血红蛋白（Hb）浓度读数在决定是否需要输注红细胞时是唯一、排他的绝对硬性指标", "临床应根据患者的特定病因针对性选择去白、洗涤或辐照等合适类型的红细胞制剂"], c: 3, desc: "血红蛋白浓度只是触发临床评估的阈值，而非排他的“决定性指标”。必须结合患者的心肺代偿、缺氧体征和流血速度进行多维度决策，严禁单纯“看数输血”。" },
+                    { q: "患者, 女, 32岁, 分娩时阴道少量渗血约 400ml, 血压 100/65mmHg 较为平稳, Hb 93g/L。因其身体感觉虚弱，家属强烈要求医师开具输全血以“大补营养和红白细胞”。此时正确的临床处理是", a: ["输注白蛋白制品以快速补充营养", "向血站申请输注同型全血 400ml", "输注新鲜冰冻血浆 400ml 改善扩容", "耐心向家属做好宣教，加强患者膳食营养, 坚决不给予任何不符合指征的输血治疗", "输注红细胞悬液 2U 以提升 Hb 跨过 100 门槛"], c: 3, desc: "患者失血量极少，血压正常，且 Hb 为 93g/L（不符合红细胞输注指征）。输血面临极大的感染和超敏风险，严禁将血液制剂作为“营养品”滥用。" },
+                    { q: "临床发生“免疫性血小板输注无效（PTR）”时，其可能涉及的患者体内的同种免疫不规则抗体不包括", a: ["由于发热或感染介导的非特异消耗", "由于自身免疫产生的抗核体", "患者体内产生针对供者血小板特异抗原（HPA）的抗体", "患者体内产生针对供者人类白细胞抗原（HLA-I类）的抗体", "患者体内产生针对供者红细胞 RhD 抗原的抗体"], c: 4, desc: "Rh系统抗原（如D抗原）仅高度特异性地合成并表达于红细胞膜上。血小板不表达任何Rh系统抗原，因此抗-D抗体不会导致PTR。" },
+                    { q: "患者, 女, 31岁, 体重55kg, 因车祸大出血引起失血性休克, WBC 9.2, RBC 2.2, PLT 125。临床抢救补液建立通道时，应首选快速建立通道并输入", a: ["右旋糖酐或羟乙基淀粉等血浆代用品", "平衡盐溶液、生理盐水等晶体液", "高浓度人血白蛋白制剂", "库存时间较长的普通异体全血", "新鲜采出的异体全血"], c: 1, desc: "失血性休克早期，最紧急和最核心的抢救任务是迅速补充细胞外液、恢复回心血量。平衡盐溶液等晶体液是纠正血容量、恢复灌注的首选和基石。" },
+                    { q: "在临床输血中，输注“生理盐水洗涤红细胞”的明确临床适应证不包括", a: ["患者罹患自身免疫性溶血性贫血(AIHA)", "患者既往对异体血浆蛋白（如IgA）发生过严重的过敏或休克反应", "新生儿溶血病需要进行换血或输血治疗", "患者伴有严重的肾功能不全、高钾血症需要输红细胞", "患者罹患普通的急性失血性重度贫血，无任何过敏历史"], c: 4, desc: "普通的急性失血性贫血直接输注普通的去白悬浮红细胞即可，无需耗费人力物力进行洗涤红细胞制备（洗涤会损失约10-20%的红细胞并破坏保存液）。" },
+                    { q: "下列哪种恶性疾病或全身病理状态下，患者绝对不能接受回收式或异体全血输注的是", a: ["大手术中发生的急性大出血", "急性骨髓造血停滞危象", "重度地中海贫血合并心衰", "多发性骨髓瘤合并肾功能衰竭", "血栓性血小板减少性紫癜(TTP)患者"], c: 4, desc: "TTP的发病核心是体内ADAMTS13活性缺乏导致超大vWF多聚体聚集。输注富含血小板的有形血液成分会使微血栓级联爆发，导致致命后果。TTP治疗的首选是血浆置换，禁忌输注血小板及富含有形血细胞的全血。" },
+                    { q: "新鲜冰冻血浆(FFP)在保存期满后转为普通冰冻血浆(FP)，其判定的界限是超低温保存超过", a: ["1年", "2年", "3年", "6个月", "5年"], c: 0, desc: "新鲜冰冻血浆（FFP）中含有易衰减的不稳定凝血因子，其在 $-20^{\\circ}C$ 以下保存期为1年。超过1年后，转为普通冰冻血浆（FP）保存。" },
+                    { q: "临床输注新鲜冰冻血浆(FFP)的明确、符合规范的适应证不包括", a: ["患者发生弥散性血管内凝血(DIC)合并多部位大出血", "大量快速输血伴发的严重稀释性凝血功能障碍", "肝病终末期患者出现的获得性多重凝血因子严重缺乏", "口服华法林等抗凝剂过量引起的活动性严重出血", "晚期癌症患者伴发重度营养不良、需要输浆补充白蛋白和营养"], c: 4, desc: "补充白蛋白有专一的高纯度人血白蛋白制剂，补充营养有肠外营养液，严禁将极易传播病毒且易引发过敏和TRALI的血浆作为普通“营养品”使用。" },
+                    { q: "我国血站标准中，从 200ml 新鲜冰冻血浆中制备提取出的 1 单位（1U）冷沉淀凝血因子，其制剂容量及核心凝血因子 VIII 含量应分别为", a: ["10 ~ 20ml, 因子VIII 含量 \\(\\ge 80\\text{IU}\\)", "10ml 左右, 因子VIII 含量 \\(\\ge 100\\text{IU}\\)", "20 ~ 30ml（或 50ml 左右）, 因子VIII 含量 \\(\\ge 80\\text{IU}\\)（或 \\(\\ge 40\\text{IU}\\)，通常由 200ml 浆制备的 1U 含量 \\(\\ge 40\\text{IU}\\) / 400ml 浆制备的 2U \\(\\ge 80\\text{IU}\\)）", "50ml 左右, 因子VIII 含量 \\(\\ge 120\\text{IU}\\)", "20 ~ 30ml, 因子VIII 含量 \\(\\ge 80\\text{IU}\\)"], c: 2, desc: "200ml新鲜全血或血浆分离制备的1单位冷沉淀，其最终体积通常为20-30ml左右（部分标准稀释至50ml），因子 Ⅷ 含量应 $\ge 40\text{IU}$（400ml全血分离血浆制备的2U冷沉淀因子 Ⅷ 含量 $\ge 80\text{IU}$）。" },
+                    { q: "临床常用冷沉淀凝血因子（Cold Precipitate）制剂中，不包含下列哪种成分", a: ["纤维稳定因子(XIII 因子)", "不稳定的凝血因子 V", "血管性血友病因子(vWF)", "高浓度的纤维蛋白原(I 因子)", "不稳定凝血因子 VIII"], c: 1, desc: "冷沉淀中高度富集了 FVIII、I 因子、vWF 和 FXIII 因子，但不包含凝血因子 V（FV）。" },
+                    { q: "自身免疫性溶血性贫血（AIHA）患者，既往有输血史。在输入红细胞 15 分钟后突发全身红疹及严重皮肤瘙痒，确诊为严重的血浆蛋白过敏反应并立即停输。若该患者病情需要必须再次输注红细胞，应首选", a: ["普通去白悬浮红细胞", "生理盐水洗涤红细胞（少浆红细胞）", "年轻红细胞制剂", "解冻去甘油冰冻红细胞", "同型全血"], c: 1, desc: "该AIHA患者发生的过敏反应是由于对供者血浆中的某种蛋白质（如抗IgA）超敏。采用生理盐水进行3次以上洗涤，能将残留血浆清除 $\ge 98\%$ 以上，彻底消除过敏原。" },
+                    { q: "对于由于恶性血液病等疾病导致严重免疫功能缺陷或抑制的贫血患者，临床如需输注红细胞，首选", a: ["0.9% 生理盐水多次洗涤红细胞", "去白细胞悬浮红细胞", "经过放射照辐处理的“辐照红细胞”", "浓缩红细胞", "年轻红细胞"], c: 2, desc: "免疫缺损者无法对输入的有活性异体淋巴细胞进行免疫清除，极易发生致死率超90%的TA-GVHD。输注经过射线辐照、使淋巴细胞丧失分裂能力的辐照红细胞是唯一的刚性指征。" },
+                    { q: "张某, 伴有多年慢性肝炎肝硬化病史。因严重腹胀、无力就诊, 诊断为失代偿性肝硬化。实验室检查提示血浆白蛋白显著降低, A/G 比值发生倒置。为纠正该患者的低蛋白血症，临床治疗宜首选", a: ["新鲜冰冻血浆(FFP)", "人血白蛋白注射液", "冷沉淀凝血因子", "同型悬浮红细胞", "普通冰冻血浆(FP)"], c: 1, desc: "肝硬化低白蛋白血症的病因是肝脏合成白蛋白能力衰退。治疗应首选安全、无病毒传染风险、浓度极高的人血白蛋白制剂进行靶向补充。" },
+                    { q: "患者, 女, 31岁, 重型再生障碍性贫血（AA）。在病房输注悬浮红细胞及单采血小板治疗约 20 分钟后，突然发生严重寒战、发热、剧烈头痛伴恶心, 测体温 38.8℃ (上升了 2.0℃)，血压正常。立即停止输血并进行退热处理，7 小时后症状完全缓解。若该患者因红系低下需要再次输注红细胞，应首选", a: ["新鲜异体全血", "年轻红细胞制剂", "经射线照辐处理的辐照红细胞", "去白细胞悬浮红细胞（少白红细胞）", "普通悬浮红细胞"], c: 3, desc: "患者发生的是典型的非溶血性发热反应（FNHTR），主要由输入的异体白细胞引起。再次输注时，必须使用去白细胞红细胞以杜绝发热反应的复发。" },
+                    { q: "患者, 男, 18岁, 因膝关节腔反复自发性出血、血肿入院。以往有多次发作史, 家族中其父亲有类似严重出血史。经诊断该患者为甲型血友病。为纠正该患者活动性出血、提升凝血，输血治疗应首选输注", a: ["同型新鲜全血", "新鲜冰冻血浆(FFP)（或冷沉淀凝血因子，首选浓缩 FVIII 制剂）", "去白悬浮红细胞", "普通保存冰冻血浆", "白蛋白制品"], c: 1, desc: "甲型血友病是由于缺乏不稳定的 FVIII 引起的。输注含有高活性不稳定凝血因子的新鲜冰冻血浆（FFP）或高度浓缩 Ⅷ 因子的冷沉淀是临床的核心治疗手段。" },
+                    { q: "临床应用冷沉淀凝血因子（Cold Precipitate）输注时, 其明确的临床适应证不包括", a: ["血管性血友病(vWD)", "遗传性或获得性凝血因子 XIII 缺乏症", "弥散性血管内凝血(DIC)合并低纤维蛋白原出血", "血友病 A（甲型血友病）", "血友病 B（乙型血友病，缺乏因子 IX）"], c: 4, desc: "血友病B是由于体内缺乏凝血因子 IX（FIX）导致的。冷沉淀中不含有因子 IX，因此血友病 B 患者输注冷沉淀完全无效，应选用凝血酶原复合物或高纯度 FIX 制剂。" },
+                    { q: "临床因重度慢性贫血等原因需要接受反复、长期多次红细胞输注的患者，为了防止同种免疫产生不规则意外抗体，最提倡和最宜输注", a: ["生理盐水多次洗涤红细胞", "高浓度浓缩红细胞", "超低温保存冰冻红细胞", "普通悬浮红细胞", "去白细胞悬浮红细胞（少白红细胞）"], c: 4, desc: "去白红细胞能去除 99.9% 的白细胞，显著降低异体白细胞 HLA 同种免疫导致的抗体产生，防止发热反应和后续输血无效发生。" }
+                ]
+            },
+            {
+                title: "第八章：临床输血治疗技术 (10题)",
+                questions: [
+                    { q: "在临床输血治疗中，最适宜实施紧急“治疗性红细胞置换术”的急性重度中毒是", a: ["急性安眠药中毒", "急性洋地黄类药物中毒", "急性有机磷农药中毒", "急性二氧化碳重度窒息", "急性一氧化碳(CO)重度中毒"], c: 4, desc: "一氧化碳(CO)能与红细胞血红蛋白结合形成极度稳定的碳氧血红蛋白，失去释氧携氧力。实施治疗性红细胞置换，输入健康的红细胞，是抢救严重CO中毒的最有效手段。" },
+                    { q: "当患者的血小板计数大于多少, 且伴随微循环障碍或血栓形成危险时, 应紧急考虑实施“治疗性血小板去除术”", a: ["\\(300\\times10^9/L\\)", "\\(100\\times10^9/L\\)", "\\(1000\\times10^9/L\\) (即 \\(1.0\\times10^{12}/L\\))", "\\(10\\times10^9/L\\)", "\\(600\\times10^9/L\\)"], c: 2, desc: "在原发性血小板增多症等骨髓增殖性疾病中，血小板计数若异常暴增至 $1000 \times 10^9/L$ 以上，会带来极高的自发性脑血栓、心梗等风险。实施血小板去除术是临床快速降血小板的应急手段。" },
+                    { q: "目前在现代血液学和输血医学中，临床应用最广泛、最成熟的造血细胞治疗技术是", a: ["异体间充质干细胞(MSC)治疗技术", "树突状细胞(DC)靶向免疫治疗技术", "造血干细胞移植（HSCT，含骨髓及外周血）", "自然杀伤细胞(NK)肿瘤杀伤技术", "细胞因子诱导的杀伤细胞(CIK)技术"], c: 2, desc: "造血干细胞移植（HSCT）是治疗各种恶性白血病、再生障碍性贫血、骨髓增殖性肿瘤最成熟、最标准的细胞治疗方案。" },
+                    { q: "恶性血液病患者接受异基因造血干细胞移植后, 因 Hb < 60g/L 申请输注红细胞, 输血科发血时最佳的选择是输注", a: ["去白细胞红细胞制剂", "新鲜采出未保存的红细胞", "普通的悬浮红细胞", "生理盐水洗涤红细胞", "经过射线照辐处理的“辐照红细胞”"], c: 4, desc: "移植后患者处于极度严重的免疫崩溃状态，残留的异体淋巴细胞极易引发极其严重的 TA-GVHD。因此，任何输入的血液成分必须经过射线辐照破坏有核T细胞活性。" },
+                    { q: "在治疗性血浆置换术（TPE）的多项临床适应证中, 下列哪项疾病在目前的疗效评估中疗效仍无法完全确定", a: ["冷凝集素病合并溶血性贫血", "快速进行性肾小球肾炎", "重度重症肌无力(MG)危象", "难治性原发性免疫性血小板减少性紫癜(ITP)", "血栓性血小板减少性紫癜(TTP)"], c: 3, desc: "TPE对TTP、重症肌无力危象、格林巴利等有极其明确的临床疗效。但对难治性ITP，由于其抗体多由脾脏和骨髓持续产生，血浆置换的远期疗效尚不明确或无法确定。" },
+                    { q: "在治疗性血浆置换（TPE）中，理论上如果完成 1 个血浆容量（PV）的置换, 能够将受体循环中的病理大分子成分去除约", a: ["75%", "45%", "85%", "65%（或 63% 左右）", "55%"], c: 3, desc: "根据稀释及动力学公式：置换1.0个血浆容量，理论上可将循环中的致病大分子（如抗体、毒素）清除约 63%-65% 左右。置换1.5-2.0个血浆容量，清除率可达到80%以上。" },
+                    { q: "适用于血浆置换术（TPE）清除毒素的中毒性疾病中，通常不包括下列哪项", a: ["细菌内毒素引起的中毒性休克", "严重的代谢性内源性中毒", "进入体内的重金属离子中毒", "大剂量麻醉药或镇静药等过量药物性中毒", "严重的有机磷农药中毒"], c: 2, desc: "重金属离子（如铅、汞、砷）进入体内后，会迅速与组织中的蛋白质和细胞内酶紧密结合，游离于血浆中的比例极低。血浆置换对清除重金属离子效果极差，首选络合剂（如二巯丙醇）治疗。" },
+                    { q: "临床实施“治疗性红细胞去除术”时，其主要靶标是用于去除受血者体内", a: ["异常增多的各种病理白细胞", "异常增多的、不具有正常生理功能的病理性红细胞", "所有的不成熟红细胞", "正常的红细胞组分", "多余的血红蛋白分子"], c: 1, desc: "红细胞去除术（或置换术）主要针对真性红细胞增多症（PV）、镰状细胞贫血、重度疟疾感染等。旨在清除这些病理性、易导致血管堵塞和血栓形成的异常红细胞。" },
+                    { q: "在临床操作治疗性血液成分去除和置换术（TPE）中，关于体外抗凝剂的最佳使用原则是", a: ["如果患者凝血功能很差，体外管路可以不使用任何抗凝剂", "抗凝剂的使用与机器凝血无关", "可以大量过量注射抗凝剂，保证体外循环绝对不凝", "使用最小、最适剂量的抗凝剂以刚好维持体外管路及分离包内血液不发生凝固", "全程足量、不设限制地输注肝素或枸橼酸钠"], c: 3, desc: "体外循环必须使用抗凝剂。但过量使用会随着回输血流进入体内，导致受试者发生低钙抽搐或全身大出血出血。必须遵循“体外足量抗凝，回输最小全身干扰”的原则。" },
+                    { q: "在治疗性血液成分去除和置换术（TPE）中，下列哪项不良反应在临床操作中并不常见", a: ["由于大量回输引起的暂时性心血管负荷反应", "外源性病原体或细菌污染引发的严重败血症反应", "由于枸橼酸钠大量回输结合血钙导致的低血钙反应（口唇麻木、抽搐）", "致病成分在治疗后的“反跳效应”", "双侧外周深静脉穿刺部位发生局部水肿和血肿"], c: 1, desc: "TPE采用全封闭、一次性无菌管路耗材。在无菌操作规范下，细菌污染引发败血症的发生率极低，不属于常见不良反应。" }
+                ]
+            },
+            {
+                title: "第九章：常见疾病的输血应用 (25题)",
+                questions: [
+                    { q: "关于“患者血液管理（Patient Blood Management, PBM）”的具体核心临床措施, 以下说法错误的是", a: ["积极倡导并采取自体输血策略（如术前预存、术中回收）", "术前积极诊断并提早纠正患者合并的贫血", "手术前通过改善患者凝血功能以减少术中渗血", "在术中采取各种精细止血手段尽量减少医源性失血", "为了安全，在病房及ICU采取宽松、没有上限门槛的输血策略"], c: 4, desc: "PBM的核心是“以患者为中心”，提倡限制性输血（Restrictive transfusion），避免不必要的输血。宽松无节制的输血策略完全违背了 PBM 的宗旨。" },
+                    { q: "足月顺产女婴, 出生后12小时发现皮肤重度黄染, 纳差。实验室检查: 血清胆红素高达 286umol/L。母亲血型为O型、RhD阳性, 女婴为A型、RhD阳性。该患儿最可能诊断为", a: ["新生儿母乳性黄疸", "新生儿败血症引起的黄疸", "新生儿生理性黄疸", "Rh-新生儿溶血病", "ABO-新生儿溶血病(ABO-HDN)"], c: 4, desc: "生后12小时即出现黄疸（超常发超早发生），且母亲为O型，孩子为A型，符合典型的由母体IgG抗-A通过胎盘引起的新生儿溶血病（ABO-HDN）。" },
+                    { q: "重症医学(ICU)危重症患者合并贫血的常见病因中，不包括以下哪项", a: ["术中、创伤以及频繁抽血化验引起的失血", "重症患者伴发的心肺代偿功能不足", "由于溶血、感染导致的红细胞物理破坏增加", "由于促红细胞生成素(EPO)分泌不足或炎症介质导致的骨髓造血受抑", "大量输入无细胞晶体液导致的稀释性贫血"], c: 1, desc: "心肺功能不全是危重症患者对贫血耐受力变差、需要提高输血门槛的原因，但它本身并不是“导致红细胞减少、产生贫血”的直接病因。" },
+                    { q: "在输血医学中，下列哪项临床输注不属于临床规定的“大量输血（Massive Transfusion）”指标", a: ["24小时内输入大于等于自身循环血容量100%以上的异体血液", "24小时内输入红细胞分量 $\\ge 18\\text{U}$（或 $\\ge 10\\text{U}$ 悬浮红细胞）", "24小时内向患者体内输入了超过其体重 20.3U/kg 以上的红细胞制剂", "24小时内输入大于等于 10U 的普通去白悬浮红细胞（对健康成人而言尚未达到总容量的 50%）", "3小时内快速输入了大于等于自身血容量 50% 以上的异体血液"], c: 3, desc: "对于普通成人（约60kg）而言，24小时内输入10U红细胞约为 2000ml 全血当量，仅占其总血容量的 40% 左右，在没有其他紧急指标下不直接定义为大量输血。通常以24小时内输入红细胞 $\ge 10\text{U}$ 且伴休克，或3小时内输注50%血容量作为判定大量输血的依据之一（部分指南中24h输注 $\ge 10\text{U}$ 算，但D选项“对健康成人尚未达50%”且单独10U未伴大出血时，属于边缘选项，PDF答案中 Q4 答案为 D）。" },
+                    { q: "关于新生儿溶血病（HDN）换血治疗时，其血液成分选择的说法，错误、不合规范的是", a: ["新生儿换血所用的红细胞宜选用 0.9% 生理盐水悬浮的洗涤红细胞重悬液", "为了彻底置换，换血量宜设定为患儿自身总血容量的 2 倍", "对于 ABO 血型不合导致的新生儿溶血病, 宜选用 O 型红细胞和 AB 型新鲜冰冻血浆组合重构的血液", "对于 Rh 血型不合导致的新生儿溶血病, 宜选用以 ABO 血型与母亲相同、Rh 血型与患儿相同的红细胞和 AB 型新鲜冰冻血浆组合的血液", "重构的组合血液，其最终的血细胞比容(Hct)宜控制在 50% ~ 60%"], c: 0, desc: "换血用的红细胞不选用洗涤红细胞（洗涤会丢失抗冻和稳定因子，且红细胞寿命短）。应选用保存期在5天内的去白细胞悬浮红细胞重悬于AB型血浆中。" },
+                    { q: "ABO-新生儿溶血病(ABO-HDN)需要开展换血治疗时, 换血血液的首选配比方案是", a: ["AB型红细胞 + O型血浆重构", "纯O型无抗凝全血", "与患儿同型同基因的新鲜全血", "与母亲完全同型的全血", "O型去白细胞悬浮红细胞 + AB型新鲜冰冻血浆重构混合"], c: 4, desc: "为了保证输入的红细胞不会被孩子体内来自母亲的抗抗体攻击，且输入的血浆不含有抗-A/抗-B。应选用“O型红细胞”（无A、B抗原）和“AB型血浆”（无抗-A、抗-B抗体）重新混合配制。" },
+                    { q: "弥散性血管内凝血(DIC)发生多部位大出血时, 其临床救治的首要、核心治疗措施是", a: ["立即给予大剂量肝素进行全身抗凝", "给予高浓度抗凝血酶III(AT-III)制剂补充", "大量输注冷沉淀凝血因子纠正纤维蛋白原", "输注大剂量的浓缩纤维蛋白原制剂", "及时、彻底地治疗引发 DIC 的原发性疾病"], c: 1, desc: "DIC是许多严重疾病（如重度感染、羊水栓塞）的继发性病理过程。如果不从源头上控制并纠正原发病，单纯补充凝血因子或抗凝，就像“扬汤止沸”，无法阻止DIC的持续消耗（部分大纲将“纠正原发病和消除诱因”作为首要措施，在选项限制下，AT-III或抗凝属于纠正手段，Q7 PDF答案为 B）。" },
+                    { q: "女, 32岁。分娩时产道少量出血约 400mL, 血压 100/65mmHg, Hb 93g/L。因身体感觉虚弱，家属坚决要求主管医师输 400ml 异体全血以“补充营养、加速产后体力复苏”。此时正确的临床处理是", a: ["向血站申请新鲜冰冻血浆 400mL 输注", "申请输注去白细胞悬浮红细胞 2U", "输配高纯度人血白蛋白制剂", "加强日常膳食营养与铁剂，坚决不给予任何异体血制品输注", "满足家属要求，申请发配同型全血 400mL"], c: 3, desc: "失血400ml未发生任何循环障碍。Hb 93g/L，未达到红细胞输配指征。异体血液属于极具风险的生物制品，不可用于“营养补充”。" },
+                    { q: "关于围手术期临床红细胞成分血液的输注策略, 以下说法错误的是", a: ["如果受试者 Hb > 100g/L, 临床一律不宜批准红细胞输注", "如果受试者 Hb < 70g/L, 宜积极批准红细胞输配", "为了减少术中输血，应积极在术前及术后诊断并药物治疗患者合并的贫血", "如果受试者 Hb 处于 70 ~ 100g/L 之间, 应当根据患者的年龄、心肺功能代偿、出血速度及缺氧体征综合判断是否输注", "为了省事，只要手术大出血，单次申请红细胞制剂即可不设上限（如单次直接开 10U）"], c: 4, desc: "临床用血申请有严格的用血限额控制。单次申请红细胞超过 4U 以上（大量用血）必须由科室主任签字签字并提报院内审批，急救除外。不可盲目单次超大额申请。" },
+                    { q: "甲型血友病患者, 在接受胃切除手术中伤口发生广泛性渗血不止, 此时临床应首选输注", a: ["高纯度浓缩凝血因子IX替代品", "止血药氨甲苯酸(PAMBA)", "冷沉淀凝血因子（或浓缩 FVIII 制剂）", "刚采出的同型新鲜全血", "单采血小板制剂"], c: 2, desc: "甲型血友病缺乏因子 VIII。冷沉淀富含 Ⅷ 因子和纤维蛋白原，能快速提升 Ⅷ 因子水平并达到术中止血目的。" },
+                    { q: "处于高凝阶段的 DIC 患者, 因红系受累重度贫血伴发严重的组织缺氧, 此时输血首选输注", a: ["生理盐水多次洗涤红细胞制剂", "经过射线辐照的辐照红细胞", "新鲜异体全血", "年轻红细胞制剂", "去白细胞悬浮红细胞"], c: 0, desc: "处于DIC高凝期的患者，微循环内广泛微血栓形成。如果输入普通的红细胞，红细胞膜表面的前凝血活性物质可能会加速微血栓的爆发。输入经过洗涤、去除了绝大部分血浆和活性促凝物质的“洗涤红细胞”，能最大程度减少对DIC高凝相的干扰并改善携氧。" },
+                    { q: "关于产科产后出血（PPH）, 下列说法错误、不符合指南规范的是", a: ["产科大出血可发生于分娩产程的各个阶段, 其中 80% 以上在产后发生", "产后出血的首要、最常见危险因素为子宫收缩乏力", "应对产后出血患者实时进行凝血功能和血常规血小板的动态监测与评估", "产科严重出血休克复苏时，应一律采用高强度的“积极晶体液复苏”作为核心初始液体复苏策略", "产后出血是指胎儿经阴道娩出 24 小时内，出血量 $\\ge 500\\text{ml}$，或剖宫产术后出血量 $\\ge 1000\\text{ml}$"], c: 3, desc: "产科出血抢救时，过度、大量的晶体液复苏会导致血液严重稀释、发生稀释性凝血功能障碍（“致死三联征”）。目前提倡“限制性液体复苏”并及早进行红/浆/冷沉淀的高比例联合输注。" },
+                    { q: "关于现代输血医学提倡的“患者血液管理（PBM）”, 下列描述中不正确、不科学的是", a: ["PBM 的核心出发点是以“异体成分血液血液制品”为中心", "PBM 强调以“受试患者”为诊疗中心", "PBM 强调以多学科的临床循证医学证据为决策基础", "PBM 采用多学科、跨专业的综合技术与方法", "PBM 的终极目在于改善患者的整体临床预后并降低医疗风险"], c: 0, desc: "PBM的核心变革在于：将以往“以血液制品为中心”转变为“以患者为中心”。通过最大化维护患者自体血、规范用血、减少输血来降低风险。" },
+                    { q: "患者, 男性, 51岁, 严重肝硬化失代偿期。实验室检查提示血浆 Alb 显著降低, A/G 比率发生倒置, 但全身凝血因子测定均处于正常下限。临床纠正该患者低蛋白血症应首选", a: ["人血白蛋白注射液", "同型悬浮全血", "新鲜冰冻血浆(FFP)", "普通冰冻血浆(FP)", "冷沉淀凝血因子"], c: 0, desc: "在没有凝血因子缺乏的前提下，低蛋白血症应专门选用安全性极高、浓度大、无过敏和病毒隐患的白蛋白制剂进行补充。" },
+                    { q: "患者, 男性, 41岁, 因“主动脉夹层”入院并准备接受紧急体外循环大手术。术中血压急剧下降, 预计术中失血量将达 2000mL 以上。下列关于该术中失血抢救描述中，最正确的是", a: ["体外循环大手术术中一律严禁输注任何异体血", "术中只能输注异体血，严禁开展任何自体血+异体血的混合输用", "该主动脉手术中由于涉及大血管，绝对属于回收式自体输血的禁忌证", "由于起病急，术前无法开展任何预存式自体输血", "术中应大力推广并执行机械“回收式自体输血”，回收失血过滤回输以保护宝贵血源"], c: 4, desc: "对于心血管体外循环等预计失血量巨大的非感染、非肿瘤大手术，术中利用血液回收机进行“回收式自体输血（Cell Salvage）”，将流出的血过滤洗涤后回输，是减少异体输血、拯救生命的最佳方案。" },
+                    { q: "假如新生儿血型鉴定为 AB 型、RhD 阳性, 其母体血型为 A 型、RhD 阴性(体内已产生抗-D)。新生儿因母体抗体通过胎盘发生严重溶血病(HDN), 换血治疗时宜选择的红细胞血型为", a: ["A 型 RhD 阳性洗涤红细胞", "O 型 RhD 阳性洗涤红细胞", "AB 型 RhD 阴性洗涤红细胞", "O 型 RhD 阴性洗涤红细胞", "AB 型 RhD 阳性洗涤红细胞"], c: 3, desc: "母亲为 RhD 阴性且含抗-D，抗-D已进入孩子体内。为了保证输入的红细胞绝对不会被抗-D和抗-B攻击，必须选择不表达 D、B 抗原的红细胞，即 O 型 RhD 阴性洗涤红细胞。" },
+                    { q: "男性患儿, 出生后 2 天出现严重贫血、轻度全身水肿及黄疸症状, 测血清胆红素高达 350umol/L。血型鉴定提示患儿为 A 型、Rh 阳性, 其母亲为 O 型、Rh 阳性。为确诊该患儿是否为 ABO-HDN, 实验室确诊的核心依据是开展", a: ["意外抗体特异性鉴定试验", "红细胞抗体释放（放散）试验(Heat/Acid Elution Test)", "唾液血型物质中和检测试验", "直接抗人球蛋白试验(DAT)", "抗体筛查试验"], c: 1, desc: "新生儿红细胞上的 A 抗原点位发育不全。直接抗球（DAT）在ABO-HDN中常呈弱阳性或阴性。通过放散试验，将结合在患儿红细胞膜上的来自母亲的抗-A释放出来并与A、B红细胞结合显色，是确诊ABO-HDN的绝对金标准。" },
+                    { q: "患者, 男性, 52岁, 体重68kg, 拟行直肠癌根治术。术前血常规提示：WBC 5.0, Hb 142g/L, RBC 4.8, PLT 150, 凝血及肝肾功能均完全正常。术中大手术失血量达 800mL。该患者此时合理的输液/输血方案是", a: ["及时给予晶体液和胶体液扩容并补足丢失血容量即可，无须输注异体红细胞", "紧急申请去白细胞悬浮红细胞 2U", "联合输注红细胞 2U 以及新鲜冰冻血浆 200ml", "仅输注新鲜冰冻血浆 400ml", "输注生理盐水洗涤红细胞 2U"], c: 0, desc: "患者体重68kg，术前 Hb 高达 142g/L，基础血容极佳。术中失血 800ml（低于总血容量的 15%-20%）。在晶体液和胶体液扩容下，其携氧完全可以代偿，无需承担异体输血风险。" },
+                    { q: "关于临床对地中海贫血患者的规范化输血治疗, 以下说法错误、不科学的是", a: ["宜为患者选择与其 ABO、RhD同型, 且与其 CcEe 抗原表型完全匹配的红细胞, 避免发生同种免疫", "根据临床严重程度，分为输血依赖性地贫(TDTs)和非输血依赖性地贫(NTDTs)", "对于非输血依赖性地中海贫血患者, 不宜单纯以 Hb 水平作为输血决定依据, 除非 Hb < 50g/L 或伴严重代偿不全", "应在首次输血前对患者进行全套血型抗原定型和不规则抗体筛查，建立专属输血档案", "地中海贫血患者的 TDTs 和 NTDTs 属于终身固定类别, 绝对不会随年龄和病程进展在两个类别间转换"], c: 4, desc: "地中海贫血患者的病情是动态演变的。随着年龄增大、脾功能亢进或合并感染，原本非输血依赖（NTDT）的患者可能恶化转为输血依赖（TDT）。类别并非终身固定。" },
+                    { q: "关于孕妇在妊娠期及足月时的血液生理学改变，下列说法错误的是", a: ["妊娠足月时母体血浆容量平均约可增加 1000ml", "红细胞容量也会代偿性增加约 300 ~ 350ml", "白细胞计数会随妊娠周数增加而发生生理性增高", "产妇由于总血容量大幅扩充，对产后急性失血的耐受性相对较好", "妊娠期血液生理性处于高凝状态，纤维蛋白原、大部分凝血因子（尤其是 VIII 因子）代偿性升高显著"], c: 4, desc: "为了防止分娩时大出血，孕妇血液在妊娠中晚期生理性处于“高凝状态”，纤维蛋白原、因子 Ⅷ 等明显代偿性升高，而非“低凝状态”或“降低显著”。" },
+                    { q: "对于急性上消化道大出血（UGIB）患者, 在快速建立通道液体复苏时，下列哪项临床情况不宜作为输注红细胞的指征", a: ["患者仅排出一口黑便，生命体征完全正常平稳，Hb > 100g/L", "发生严重的失血性休克或急性循环衰竭", "血红蛋白 Hb < 70g/L 且仍有活动性大出血", "出现严重缺氧体征，心率持续异常增快超过 110 次/分", "血压骤降，收缩压 < 90mmHg 或比平时基础收缩压降低 30% 以上"], c: 0, desc: "如果患者仅排出少量黑便，生命体征完全平稳且 Hb > 100g/L，说明出血已止或失血极微。直接通过膳食或口服铁剂调理即可，严禁开具红细胞输注。" },
+                    { q: "在造血干细胞移植（HSCT）血型转换过渡期中，下列受者与供者血型不合时的血液成分输配选择，错误的是", a: ["受者为 A 型, 供者为 O 型（主侧不合）, 红细胞输注应选择 O 型", "受者为 O 型, 供者为 A 型（反侧不合）, 红细胞输注应选择 O 型", "受者为 A 型, 供者为 O 型, 血小板输注应选择 A 型", "受者为 O 型, 供者为 B 型, 血小板输注应选择 O 型", "受者为 A 型, 供者为 B 型（双向不合）, 红细胞输注应选择 O 型"], c: 2, desc: "受者为 A 型（体内含天然抗-B），供者为 O 型（血浆中含天然抗-A、抗-B）。如果血小板选择 A 型，会被 O 型供者来源的抗-A攻击破坏。在此血型转换过渡期，血小板输注应优先选用受、供者双向相合的“O型”或“AB型”血小板。" },
+                    { q: "临床应用血小板输注治疗中，下列哪项临床情况属于不宜输注、属于相对禁忌证的是", a: ["血栓性血小板减少性紫癜(TTP)患者伴发危及生命的颅内严重大出血", "严重创伤手术出血患者，血小板计数 \\(PLT < 50 \\times 10^9/L\\)", "出血并不严重、且没有活动性出血危险的轻症患者，其 \\(PLT < 30 \\times 10^9/L\\)", "无任何临床活动性出血表现、也没有侵入性操作计划的普通内科患者，其 \\(PLT > 10 \\times 10^9/L\\)", "无出血倾向、且不接受手术创伤的普通慢性免疫性血小板减少症（ITP）患者, 其 \\(PLT < 10 \\times 10^9/L\\)"], c: 2, desc: "对于没有活动性出血和手术创伤的普通 ITP 患者，其 PLT 即使偏低，由于是自身抗体介导的，盲目输注异体血小板会瞬间被自身抗体破坏清除，无法提升血小板，反而会诱发同种免疫，应列为相对禁忌（ITP主要靠激素、丙球治疗，PDF答案中 Q23 选择 C）。" },
+                    { q: "患者, 男性, 38岁, 严重面积烧伤入院并急需开具血浆输注扩容, 但血型由于大面积渗出导致血型鉴定一时极为困难。此时该患者紧急血浆输配应首选", a: ["O 型新鲜冰冻血浆", "B 型新鲜冰冻血浆", "A 型新鲜冰冻血浆", "AB 型新鲜冰冻血浆", "任意血型的血浆均可"], c: 3, desc: "AB型血浆不含有抗-A和抗-B抗体。在受血者血型未知或无法鉴定出来时，输注 AB 型血浆绝对不会对受血者红细胞膜表面的抗原产生任何凝集溶解，属于“万能供体血浆”。" },
+                    { q: "患者, 女性, 52岁, 宫颈癌根治术后 4 年。因双下肢浮肿加重 1 周入院。实验室检查：Hb 55g/L, RBC 2.08, 总蛋白 TP 46g/L, 白蛋白 Alb 10.5g/L, 凝血功能正常。该患者合理的输配制剂是", a: ["同型无菌全血 400ml", "高浓度冷沉淀凝血因子 + 去白细胞悬浮红细胞", "人血白蛋白注射液 + 去白细胞悬浮红细胞", "新鲜冰冻血浆(FFP) + 去白细胞悬浮红细胞", "普通冰冻血浆(FP) + 去白细胞悬浮红细胞"], c: 2, desc: "患者 Hb 55g/L（重度贫血缺氧，需补红细胞）；白蛋白仅 10.5g/L（重度低蛋白血症导致下肢重度水肿，需补白蛋白）。而凝血指标正常，无需输注血浆。首选高度靶向、高浓度的白蛋白液联合悬浮红细胞治疗。" }
+                ]
+            },
+            {
+                title: "第十章：输血不良反应与传播疾病 (25题)",
+                questions: [
+                    { q: "在已知的所有输血相关反应中, 临床致死率最高、后果最严重的急性不良反应是", a: ["急性发热性非溶血性输血反应(FNHTR)", "过敏性超敏皮疹反应", "输血后紫癜(PTP)", "急性溶血性输血反应(AHTR)", "急性轻度过敏性荨麻疹"], c: 3, desc: "急性溶血性输血反应（通常由ABO血型不合错输引起）可瞬间爆发严重的血管内溶血、急性肾衰竭（ARF）和DIC，死亡率极高。" },
+                    { q: "临床发生急性溶血性输血反应中，最常见、最容易引起致命血管内溶血的异体不规则抗体为", a: ["天然高效价抗-A 或 抗-B", "Duffy系统的抗-Fya", "Kidd系统的抗-Jka", "Rh系统的抗-E", "P系统的抗-P1"], c: 0, desc: "ABO血型不合输血（如将A型血输入B型受者），受者体内的天然 IgM 类抗-A会与输入的红细胞即刻结合并高效激活补体，引发瞬间的急性血管内溶血。" },
+                    { q: "男, 80岁。输红细胞后半小时突发呼吸急促、发绀、咳大量粉红色泡沫样痰。体检：颈静脉高度怒张, 双肺听诊可闻及密集的湿啰音, 心率 130次/min。最可能的输血反应是", a: ["严重过敏性超敏反应", "输血相关循环超负荷(TACO)", "急性溶血性输血反应", "输血相关移植物抗宿主病(TA-GVHD)", "输血传播细菌性败血症"], c: 1, desc: "高龄患者心功能代偿差。快速、大量输液输血导致回心血量暴增，左心衰竭肺淤血，咳粉红色泡沫痰及湿啰音是典型的 TACO 表现。" },
+                    { q: "白血病患者。在既往多次接受血小板输注中均反复出现严重寒战、发热、荨麻疹表现。本次在输注血小板约 10 分钟后，再次突发发热、背部和双手爆发红疹并伴剧烈瘙痒。该患者发生的是", a: ["单纯性过敏反应", "输血传播细菌污染反应", "发热性非溶血性输血反应(FNHTR)", "血小板同种抗体无效(PTR)", "发热反应合并过敏反应"], c: 4, desc: "患者既往有多次发热和过敏史。本次输注同时发生了发热（FNHTR）以及典型的过敏皮疹变应性反应，属于两者的合并爆发。" },
+                    { q: "急性溶血性输血反应(AHTR)发生极其早期时，其临床表现极易与下列哪种较轻的不良反应相混淆", a: ["输血相关急性肺损伤(TRALI)", "过敏性超敏性休克", "发热性非溶血性输血反应(FNHTR)", "细菌污染性败血症", "急性过敏性荨麻疹"], c: 2, desc: "AHTR非常早期的表现往往也仅仅是突发寒战和发热，极易被误判为普通的 FNHTR。直到出现腰背剧痛、酱油色尿和低血压时才被确诊。因此发热必须第一时间停输并排查溶血。" },
+                    { q: "目前在我国，通过实行严格的无偿献血规范筛查，下列哪种病毒已经基本不属于通过输血途径传播的病原体", a: ["风疹病毒(Rubella Virus)", "丙型肝炎病毒(HCV)", "人类免疫缺陷病毒(HIV)", "梅毒螺旋体", "乙型肝炎病毒(HBV)"], c: 0, desc: "风疹病毒不属于常规输血传播疾病筛查红线。HBV, HCV, HIV, 梅毒是国家强制要求开展酶免及核酸检测（NAT）的四大核心筛查病原体。" },
+                    { q: "受血者血型为 A 型, 临床不慎输注了一袋 AB 型悬浮红细胞, 会发生", a: ["轻度过敏反应", "急性非溶血性发热反应", "不会发生任何明显的输血不合反应", "低血压性神经血管反应", "严重的急性溶血性输血反应"], c: 4, desc: "A型受血者的血清中含有强力的天然抗-B抗体。输入的AB型红细胞表面表达B抗原，会立刻被抗-B攻击结合并激活补体，引发致命的急性溶血。" },
+                    { q: "发生急性溶血性输血反应时, 患者体内在病理学上发生显著降低的血液生化指标是", a: ["血浆结合珠蛋白（Haptoglobin, HP）", "血清总胆红素定量", "血清乳酸脱氢酶(LDH)", "尿液中游离血红蛋白检测", "血清游离血红蛋白定量"], c: 0, desc: "红细胞破裂释放出大量游离血红蛋白。体内的结合珠蛋白（HP）会迅速与其结合以便清除。这会导致游离的结合珠蛋白浓度发生断崖式下跌，甚至测不出。" },
+                    { q: "临床最常见的“轻度过敏性输血反应”，其最典型的皮肤黏膜症状是", a: ["局限性皮肤瘙痒、红斑及大面积荨麻疹、眼睑/口唇轻度水肿", "心率骤减、血压下降休克", "严重的突发剧烈腰背痛、血尿及少尿", "寒战、突发高热、剧烈头痛", "剧烈咳嗽、严重气促、胸闷并咯粉红色泡沫样痰"], c: 0, desc: "轻度过敏反应主要是由于对血浆蛋白超敏释放组胺引起的。表现为局限性瘙痒、荨麻疹、红斑以及颜面部轻度局限性水肿。" },
+                    { q: "因输入的血液制品中含有高滴度针对受血者有核白细胞(HLA或HNA)的同种抗体，特异性结合并激活补体，导致肺微血管内皮受损并爆发严重的非心源性肺水肿反应是", a: ["输血相关急性肺损伤(TRALI)", "发热性非溶血性输血反应(FNHTR)", "输血相关细菌性脓毒血症(TAS)", "输血相关循环超负荷(TACO)", "急性溶血性输血反应(AHTR)"], c: 0, desc: "TRALI（Transfusion-Related Acute Lung Injury）是由供者血浆中残留的有针对受者白细胞抗原的抗体介导的。这些抗体攻击受者白细胞，导致肺部微血管通透性骤增，产生急性非心源性双肺水肿和呼吸衰竭。" },
+                    { q: "临床上，由游离的 HNA 抗体与 HLA-I 类或 II 类抗体相互结合攻击靶细胞所特异性诱发的呼吸系统严重输血反应是", a: ["输血相关性急性肺损伤(TRALI)", "输血相关移植物抗宿主病(TA-GVHD)", "严重过敏性呼吸道痉挛反应", "急性溶血性输血反应导致的过度换气", "输血后紫癜"], c: 0, desc: "TRALI 的免疫学发生机制即是由于输入的异体血浆中含有的特异性抗-HLA或抗-HNA不完全抗体，攻击受者白细胞引起的肺组织渗透损伤。" },
+                    { q: "女, 有多次输血史及多胎妊娠史。在再次接受红细胞成分输注过程中, 突然排出明显的血红蛋白尿（酱油色尿）。为了明确查明该发热和溶血不良反应原因，应首选筛查患者血浆中的", a: ["红细胞同种意外抗体", "血浆白蛋白特异抗体", "白细胞 HLA-II类抗体", "血小板 HPA 同种抗体", "红细胞自身抗体"], c: 0, desc: "出现血红蛋白尿代表发生了溶血。由于其有输血和妊娠致敏史，应重点检测其血清中是否存在针对供者红细胞抗原（如Rh系统的E、e等）的同种不规则意外抗体。" },
+                    { q: "在常规输血中，引起发热性非溶血性输血反应（FNHTR）最常见、最普及的非免疫性物理/化学病因是", a: ["异体 ABO 血型不合", "红细胞在体外自发性破裂", "血袋受到严重的细菌污染", "血液或输血器具中残留了微量的微量热原（Pyrogen）", "血浆中混入了大量外源过敏性变应原物质"], c: 3, desc: "尽管白细胞抗体免疫反应是主要机制，但在普通物理耗材中，器具或保养液中残留的微量内毒素及热原（Pyrogen）是引发无菌发热反应的最常见物理和化学根源。" },
+                    { q: "下列哪项严重的全身性重症反应，与输入的血液制品受到病原微生物或革兰氏阴性杆菌严重污染密切相关", a: ["输血相关性急性肺损伤(TRALI)", "柠檬酸盐导致的全身性低钙血症", "输血相关性急性呼吸困难", "全身低钾血症合并心律失常", "败血症或细菌污染性休克(TAS)"], c: 4, desc: "若血小板或红细胞在采集、制备中被细菌污染并在常温下大量繁殖，输注后其释放的内毒素会引发受血者发生极度严重的细菌污染性反应（TAS），产生感染性休克（败血症）。" },
+                    { q: "关于临床血液免疫学中的“血管外溶血反应”, 正确的叙述是", a: ["主要由高效价的天然抗-A、抗-B等 IgM 抗体强力介导产生", "多为 ABO 以外血型系统（如 Rh, Duffy, Kidd）不合输注，由单体 IgG 类不规则抗体结合红细胞后，在脾脏等单核-巨噬细胞系统中被吞噬溶解", "最常见于 ABO 系统的不同型不合输注中", "由 IgM 意外抗体结合补体后直接在血管通道内溶解红细胞", "通常在输注开始后的 5-15 分钟内即刻立即发生"], c: 1, desc: "血管外溶血（Extravascular hemolysis）多由非ABO系统的IgG类温抗体引起。红细胞膜被抗体致敏后，通过脾脏时被其中的巨噬细胞识别并吞噬破坏。通常在输血数天后发生（迟发性溶血反应）。" },
+                    { q: "在临床实施超大量快速输血后，为了有效治疗和预防由柠檬酸盐大量蓄积导致的低钙血症及柠檬酸盐中毒，首选的特效对抗药物是", a: ["地塞米松等肾上腺皮质激素", "10% 氯化钾注射液", "肝素钠注射液", "5% 碳酸氢钠注射液", "10% 葡萄糖酸钙（或氯化钙）注射液"], c: 4, desc: "大量输入的保养液中含有枸橼酸钠（柠檬酸盐）。它会强力螯合受试者体内的游离钙离子，导致血钙骤降、肌肉抽搐及心功能受阻。通过静脉补充葡萄糖酸钙能迅速释放游离钙，对抗中毒。" },
+                    { q: "目前在我国各大医院输血医学中，公认最有效、最彻底预防非溶血性发热反应（FNHTR）的临床手段是", a: ["在输血前全面降低血液的输注流速", "大力推广并全面使用去白细胞血液制品（白细胞滤器处理）", "在血液制品进行输注前，常规对其进行无菌细菌培养筛查", "严格将每名患者的单次输血量控制在 1U 以内", "严格执行 ABO 双向同型同源输注"], c: 1, desc: "FNHTR 主要是由异体 leukocyte 及其释出的细胞因子引起的。使用第三代白细胞滤器将白细胞清除至 $5\times 10^6$ 以下，能彻底消灭 FNHTR 的发生。" },
+                    { q: "男, 45岁, 骨折复位术中大出血。患者血型为 AB 型, 术中输注了同型 AB 型悬浮红细胞 4U。在输血约半小时后, 患者突然发生血压骤降、休克, 手术创口大面积非特异性渗血不止, 且尿袋中尿液呈现深酱油色。该患者最可能发生了", a: ["左心衰竭合并循环超负荷", "严重的全身超敏性休克反应", "迟发性血管外溶血反应", "严重的输血传播细菌污染反应(TAS)", "由于 AB 亚型或配血错误引起的急性溶血性输血反应(AHTR)"], c: 4, desc: "血压骤降、尿呈酱油色（血管内溶血游离 Hb 溢出）、创口不凝渗血（DIC爆发），是极其典型的急性溶血性输血反应的表现。必须立刻停止发血并开展急救。" },
+                    { q: "大量的临床研究及行业标准表明, 为了彻底、有效防范 FNHTR 的发生，每单位红细胞制品中的异体白细胞残留量必须控制在", a: ["低于 \\(5 \\times 10^6\\) 门槛", "低于 \\(5 \\times 10^7\\)", "低于 \\(1 \\times 10^6\\)", "低于 \\(1 \\times 10^7\\)", "低于 \\(5 \\times 10^8\\)"], c: 0, desc: "白细胞滤器的去白标准是：单袋血液制剂中的残留白细胞必须 $\le 5\times 10^6$，这也是防止发热反应和 HLA 同种免疫致敏的国际公认界限。" },
+                    { q: "下列已知的一系列不良输血反应中，明确属于“迟发性输血反应（Delayed Transfusion Reaction）”的是", a: ["急性输血相关循环超负荷(TACO)", "输血相关急性低血压性过敏反应", "由于残留淋巴细胞植活攻击导致的输血相关移植物抗宿主病(TA-GVHD)", "严重的急性溶血性输血反应", "枸橼酸钠柠檬酸盐急性蓄积中毒"], c: 2, desc: "TA-GVHD是一种迟发性免疫反应。输入的异体T细胞在受者体内增殖并反客为主攻击宿主器官，通常在输血后 1-4 周（约7-30天）发生，致死率极高。" },
+                    { q: "临床研究证实，输注受革兰氏阳性球菌轻度污染的血制品，其临床爆发细菌性休克反应的严重度往往轻于革兰氏阴性杆菌污染。这主要是因为革兰氏阳性菌不具备、不产生哪种强力致热物质", a: ["细菌微量毒素", "可溶性外毒素(Exotoxin)", "细胞壁组分——强力内毒素（Endotoxin，即脂多糖 LPS）", "多重水溶性维生素类物质", "特异性物理色素"], c: 2, desc: "革兰氏阴性杆菌（如大肠杆菌、铜绿假单胞菌）在生长或溶解时会产生强大的内毒素（LPS）。内毒素是极强的致热原和血管活性物质，会瞬间引发机体发生致命的高热和感染性休克。革兰氏阳性菌不产生内毒素。" },
+                    { q: "在血站配发的所有血液成分制品中，由于其体外保存温度为 $22^{\\circ}C\\pm2^{\\circ}C$ 常温，最容易、最频繁发生细菌污染反应（TAS）的血液成分是", a: ["去白细胞悬浮红细胞", "新鲜冰冻血浆", "单采（及浓缩）血小板制剂", "普通解冻红细胞", "少白红细胞制剂"], c: 2, desc: "红细胞和血浆均在低温下保存（$4^{\\circ}C$ 或 $-20^{\\circ}C$），能显著抑制细菌繁殖。血小板必须在 $22^{\\circ}C$ 室温振荡下保存。这为细菌的生存和高速繁殖提供了天然的温床，因而血小板是TAS发生率最高的血液成分。" },
+                    { q: "患者, 男性, 78岁, 正细胞正色素性重度贫血。在病房输注 2U 悬浮红细胞后，突发心悸、剧烈气急、剧烈咳嗽并咳大量粉红色泡沫样痰。体检：血压 150/90, 心率 120, 双下肢浮肿, 颈静脉高度怒张, 双肺布满湿啰音和部分哮鸣音。该患者最可能的临床诊断是", a: ["输血相关急性肺损伤(TRALI)", "不匹配导致的急性溶血反应", "严重的输血管路空气栓塞", "重度输血相关循环超负荷(TACO)", "严重的急性超敏性喉头水肿过敏反应"], c: 3, desc: "高龄贫血患者，短时间内输入高胶体红细胞，血容量急剧增加。颈静脉怒张、肺部湿啰音、咳粉红色泡沫痰是左心衰竭、急性肺水肿和 TACO 的典型特征。" },
+                    { q: "下列病原体中，由于筛查手段极度健全和检测覆盖，目前在我国已经不属于常规经输血传播的核心高危病原体的是", a: ["人类免疫缺陷病毒(HIV)", "梅毒螺旋体", "风疹病毒(Rubella Virus)", "疟原虫", "革兰氏阴性大肠杆菌"], c: 2, desc: "风疹病毒不属于我国常规血液筛查和经血高发传播的重大传染性病原体清单项目。" },
+                    { q: "血液恶性白血病合并严重骨髓抑制和免疫低下贫血的患者，在开具并输注红细胞成分制品时，最首选、最安全的红细胞制剂是", a: ["0.9% 生理盐水多次洗涤红细胞", "经过放射照辐、破坏淋巴细胞有丝分裂活性的“辐照红细胞”", "普通的悬浮红细胞", "去白细胞悬浮红细胞", "超低温冷冻复苏解冻红细胞"], c: 1, desc: "为了绝对防范免疫缺损受者发生致死性的 TA-GVHD，其输注的有形成分血液制品（红细胞、血小板）必须全部经过辐照灭活淋巴细胞处理。" }
+                ]
+            },
+            {
+                title: "第十一章：血站及临床输血管理 (6题)",
+                questions: [
+                    { q: "在我国，省、自治区人民政府所在地的城市和直辖市, 依法规划设置的具有最高指导和业务辐射规模的公共血站级别为", a: ["地市级中心血站", "省级血液中心", "县级中心血库", "特设特殊血站", "单采血浆站"], c: 1, desc: "《血站管理办法》规定：直辖市、省会城市和自治区首府规划设置一所“血液中心”，负责辖区内血站的业务指导及技术辐射。" },
+                    { q: "下列医院临床科室功能中，不属于“医院输血科（血库）”的核心主要职责的是", a: ["负责临床用血各成分制品的调配与供应", "受血者与供血者血相容性学检测（血型、配血、抗筛等）", "对临床科室规范合理用血开展技术指导与质控监督", "在科室内自行采集无偿献血者全血并大批量制备各种原始血液成分", "负责全院血液的预订、检验入库、安全储存、以及无菌发放发放"], c: 3, desc: "临床医院输血科（血库）没有合法的“采血、集血”资质。全血采集和成分血的物理制备、灭活一律由具有许可证的血站（血液中心）完成，输血科只负责储存、检测与配发。" },
+                    { q: "在无偿献血过程中，若献血者突然出现轻度献血反应（如头晕、面色苍白、冷汗）, 医务人员首先应当采取的即刻首要措施是", a: ["递送并提供一杯热糖水", "分散献血者的注意力", "将其移送至空气流通良好的地方", "立即“停止采血行为”，拔出针头让其平卧、头部放低", "与其温和谈话, 转移其紧张情绪"], c: 3, desc: "一旦发生献血反应（多为血管迷走神经性反应），首要任务是“即刻停止采血”、解除血管张力、让其平卧以快速恢复脑部供血供氧。" },
+                    { q: "在病房执行输血前，负责临床运送受血者交叉配血试验血样、以及核对无误的《临床输血申请单》送达输血科的人员，必须是", a: ["医院专门的医护人员（或经培训的专门运送人员）", "患者在病房的陪护保姆人员", "患者在医院的法定家属或朋友代表", "具有行动能力的患者本人", "临时雇佣的普通护工"], c: 0, desc: "《临床输血技术规范》有极严格的交接规程。血样和申请单送达关系到患者生命安全，必须由“医护人员”或科室指定的专门运送人员运送，严禁家属或普通护工运送。" },
+                    { q: "为防范突发性大出血抢救或不可抗力灾害，三级及以上医院输血科（血库）的安全储血量，一般不得少于几天常规医疗的正常用血量", a: ["不少于 1 天", "不少于 3 天", "不少于 5 天", "不少于 6 天", "不少于 7 天"], c: 1, desc: "规范硬性卡控：医院储血库的安全血源储备量，必须维持在不少于“3天”常规临床消耗用血量，以防范应急断档风险。" },
+                    { q: "根据国家医疗标准，三级医院输血科一般要求配备的专职专业技术人员数量应", a: ["不少于 6 人（或按工作量比例配置，血库一般不少于 3 人，专职 6 人以上）", "不少于 3 人", "不少于 8 人, 且全部具有中级以上职称", "不少于 5 人", "科室没有人数限制，全由护士兼职兼任"], c: 0, desc: "等级医院评审标准规定：三级医院输血科应根据业务量合理配置专业技术人员，专职人员一般要求 6 人及以上（血库专职人员一般不少于 3 人）。" }
+                ]
+            }
+        ];
+
+        // 状态管理
+        let currentChapter = 0;
+        let currentIdx = 0;
+        let score = 0;
+        let userAnswers = []; // 用户当章作答状态
+        let wrongBook = [];   // 全局错题记录 [{chIdx, qIdx}]
+        let isWrongBookMode = false;
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function init() {
+            // 加载本地进度及错题
+            try {
+                const storedWrongs = localStorage.getItem('transfusion_wrongs');
+                if (storedWrongs) {
+                    wrongBook = JSON.parse(storedWrongs);
+                    updateWrongCount();
+                }
+            } catch (e) {
+                console.error("加载错题记录异常");
+            }
+
+            renderChapterList();
+            updateGlobalStats();
+            detectTheme();
+            setupGestureDetection();
+        }
+
+        // 滑动手势支持 (手机自测加速)
+        function setupGestureDetection() {
+            const swipeArea = document.getElementById('swipe-area');
+            swipeArea.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1 && e.target.tagName !== 'INPUT') {
+                    touchStartX = e.touches[0].screenX;
+                } else {
+                    touchStartX = 0;
+                }
+            }, { passive: true });
+
+            swipeArea.addEventListener('touchend', (e) => {
+                if (e.changedTouches.length === 1 && touchStartX !== 0) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    const swipeThreshold = 65;
+                    if (touchStartX - touchEndX > swipeThreshold) {
+                        nextQuestion();
+                    } else if (touchEndX - touchStartX > swipeThreshold) {
+                        prevQuestion();
+                    }
+                }
+            }, { passive: true });
+        }
+
+        // 判定作答对错
+        function isUserAnswerCorrect(chIdx, qIdx, ans) {
+            if (ans === null || ans === undefined) return false;
+            const ch = quizData[chIdx];
+            const qData = ch.questions[qIdx];
+            return ans === qData.c;
+        }
+
+        function toggleMobileDrawer(show) {
+            const overlay = document.getElementById('mobile-drawer-overlay');
+            const drawer = document.getElementById('mobile-drawer');
+            if (show) {
+                overlay.classList.remove('pointer-events-none', 'opacity-0');
+                overlay.classList.add('opacity-100');
+                drawer.classList.remove('translate-y-full');
+            } else {
+                overlay.classList.add('opacity-0');
+                drawer.classList.add('translate-y-full');
+                setTimeout(() => overlay.classList.add('pointer-events-none'), 300);
+            }
+        }
+
+        // 深色背景探测
+        function detectTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('sun-icon').classList.remove('hidden');
+                document.getElementById('moon-icon').classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('sun-icon').classList.add('hidden');
+                document.getElementById('moon-icon').classList.remove('hidden');
+            }
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('sun-icon').classList.add('hidden');
+                document.getElementById('moon-icon').classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('sun-icon').classList.remove('hidden');
+                document.getElementById('moon-icon').classList.add('hidden');
+            }
+        }
+
+        // 全局进度和正确率计算
+        function updateGlobalStats() {
+            let totalQuestions = 0;
+            let answeredQuestions = 0;
+            let correctAnswers = 0;
+
+            quizData.forEach((ch, chIdx) => {
+                totalQuestions += ch.questions.length;
+                const progressKey = `transfusion_ch_${chIdx}_progress`;
+                const progressData = localStorage.getItem(progressKey);
+                if (progressData) {
+                    try {
+                        const parsed = JSON.parse(progressData);
+                        parsed.userAns.forEach((ans, qIdx) => {
+                            if (ans !== null) {
+                                answeredQuestions++;
+                                if (isUserAnswerCorrect(chIdx, qIdx, ans)) {
+                                    correctAnswers++;
+                                }
+                            }
+                        });
+                    } catch (e) {}
+                }
+            });
+
+            const progressPct = totalQuestions === 0 ? 0 : Math.round((answeredQuestions / totalQuestions) * 100);
+            const accuracyPct = answeredQuestions === 0 ? 0 : Math.round((correctAnswers / answeredQuestions) * 100);
+
+            document.getElementById('global-progress').innerText = `${progressPct}%`;
+            document.getElementById('global-accuracy').innerText = `${accuracyPct}%`;
+        }
+
+        // 渲染主页卡片
+        function renderChapterList() {
+            const list = document.getElementById('chapter-list');
+            list.innerHTML = '';
+
+            quizData.forEach((ch, index) => {
+                let completedCount = 0;
+                let chAccuracy = 0;
+                let totalChQ = ch.questions.length;
+                const progressKey = `transfusion_ch_${index}_progress`;
+                const progressData = localStorage.getItem(progressKey);
+                if (progressData) {
+                    try {
+                        const parsed = JSON.parse(progressData);
+                        completedCount = parsed.userAns.filter(a => a !== null).length;
+                        let chCorrect = 0;
+                        parsed.userAns.forEach((ans, qI) => {
+                            if (ans !== null && isUserAnswerCorrect(index, qI, ans)) chCorrect++;
+                        });
+                        chAccuracy = completedCount === 0 ? 0 : Math.round((chCorrect / completedCount) * 100);
+                    } catch (e) {}
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-800 border border-slate-150 dark:border-slate-850 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between group";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[10px] font-bold text-red-650 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-full">Chapter 0${index + 1}</span>
+                            <span class="text-[10px] text-slate-400">${completedCount}/${totalChQ} 已完成</span>
+                        </div>
+                        <h3 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition leading-snug">${ch.title}</h3>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-red-600 h-full rounded-full transition-all duration-500" style="width: ${(completedCount/totalChQ)*100}%"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-50 dark:border-slate-700 flex justify-between items-center font-semibold">
+                        <span class="text-[10px] text-slate-400">正确率：<strong class="text-slate-700 dark:text-slate-300">${chAccuracy}%</strong></span>
+                        <button onclick="startQuiz(${index})" class="px-4 py-1.5 bg-red-600 text-white hover:bg-red-700 text-[10px] md:text-xs font-bold rounded-lg shadow-sm transition">进入测试</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // 单章进度重置
+        function resetChapter() {
+            if (confirm("确定要清空本章当前的答题记录，并重新开始自测吗？")) {
+                const total = quizData[currentChapter].questions.length;
+                userAnswers = new Array(total).fill(null);
+                
+                wrongBook = wrongBook.filter(item => item.chIdx !== currentChapter);
+                localStorage.setItem('transfusion_wrongs', JSON.stringify(wrongBook));
+                updateWrongCount();
+
+                localStorage.removeItem(`transfusion_ch_${currentChapter}_progress`);
+
+                score = 0;
+                currentIdx = 0;
+                
+                renderQuestion();
+                renderAnswerCard();
+                updateStats();
+                updateGlobalStats();
+            }
+        }
+
+        // 全局一键重置
+        function resetAllProgress() {
+            if (confirm("警告：确定要清空全部章节的自测数据和错题本吗？此操作不可逆！")) {
+                quizData.forEach((_, index) => {
+                    localStorage.removeItem(`transfusion_ch_${index}_progress`);
+                });
+                localStorage.removeItem('transfusion_wrongs');
+                
+                wrongBook = [];
+                userAnswers = [];
+                score = 0;
+                currentIdx = 0;
+                currentChapter = 0;
+                
+                updateWrongCount();
+                showHome();
+            }
+        }
+
+        // 开始章节练习
+        function startQuiz(chIndex) {
+            isWrongBookMode = false;
+            currentChapter = chIndex;
+            currentIdx = 0;
+            score = 0;
+
+            const total = quizData[chIndex].questions.length;
+            userAnswers = new Array(total).fill(null);
+
+            const progressKey = `transfusion_ch_${chIndex}_progress`;
+            const progressData = localStorage.getItem(progressKey);
+            if (progressData) {
+                try {
+                    const parsed = JSON.parse(progressData);
+                    userAnswers = parsed.userAns;
+                    score = 0;
+                    userAnswers.forEach((ans, idx) => {
+                        if (isUserAnswerCorrect(chIndex, idx, ans)) score++;
+                    });
+                } catch(e) {}
+            }
+
+            document.getElementById('chapter-reset-btn').classList.remove('hidden');
+
+            switchScreen('quiz-screen');
+            renderQuestion();
+            renderAnswerCard();
+            updateStats();
+        }
+
+        // 渲染考题
+        function renderQuestion() {
+            let qData, qTitleText, totalQuestions;
+
+            if (isWrongBookMode) {
+                if (wrongBook.length === 0) {
+                    showHome();
+                    return;
+                }
+                const wrongItem = wrongBook[currentIdx];
+                qData = quizData[wrongItem.chIdx].questions[wrongItem.qIdx];
+                qTitleText = qData.q;
+                totalQuestions = wrongBook.length;
+                document.getElementById('category-tag').innerText = `错题攻坚 / ${quizData[wrongItem.chIdx].title}`;
+            } else {
+                const chapter = quizData[currentChapter];
+                qData = chapter.questions[currentIdx];
+                qTitleText = qData.q;
+                totalQuestions = chapter.questions.length;
+                document.getElementById('category-tag').innerText = chapter.title;
+            }
+
+            document.getElementById('progress-text').innerText = `第 ${currentIdx + 1} / ${totalQuestions} 题`;
+            
+            const container = document.getElementById('options-container');
+            const analysisBox = document.getElementById('analysis-box');
+            container.innerHTML = '';
+            analysisBox.classList.add('hidden');
+
+            document.getElementById('question-text').innerHTML = qTitleText;
+            const alphabet = ['A', 'B', 'C', 'D', 'E'];
+            const currentSelected = isWrongBookMode ? null : userAnswers[currentIdx];
+
+            qData.a.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-3.5 md:p-4 border border-slate-200 dark:border-slate-700/60 rounded-xl transition-all duration-150 flex items-start bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm md:text-base font-medium";
+                btn.innerHTML = `<span class="font-bold mr-3 text-slate-400 select-none">${alphabet[i]}.</span> <div class="flex-1">${opt}</div>`;
+
+                if (currentSelected !== null) {
+                    btn.disabled = true;
+                    if (i === qData.c) {
+                        btn.classList.add('correct');
+                    } else if (i === currentSelected) {
+                        btn.classList.add('wrong');
+                    }
+                } else {
+                    btn.onclick = () => selectOption(i);
+                }
+                container.appendChild(btn);
+            });
+
+            if (currentSelected !== null && qData.desc) {
+                analysisBox.classList.remove('hidden');
+                document.getElementById('analysis-text').innerText = qData.desc;
+            }
+
+            document.getElementById('prev-btn').disabled = currentIdx === 0;
+            document.getElementById('next-btn').innerText = (currentIdx === totalQuestions - 1) ? '自测结果结算' : '下一题';
+
+            updateStats();
+
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        // 选择单选选项
+        function selectOption(optIndex) {
+            const currentItem = isWrongBookMode ? wrongBook[currentIdx] : { chIdx: currentChapter, qIdx: currentIdx };
+            const qData = quizData[currentItem.chIdx].questions[currentItem.qIdx];
+
+            if (isWrongBookMode) {
+                // 错题模式，即时给反馈，并动态踢出/保留错题本
+                const btns = document.querySelectorAll('.option-btn');
+                btns.forEach((btn, i) => {
+                    btn.disabled = true;
+                    if (i === qData.c) {
+                        btn.classList.add('correct');
+                    } else if (i === optIndex) {
+                        btn.classList.add('wrong');
+                    }
+                });
+
+                if (optIndex === qData.c) {
+                    // 答对，从错题本移出
+                    wrongBook.splice(currentIdx, 1);
+                    localStorage.setItem('transfusion_wrongs', JSON.stringify(wrongBook));
+                    updateWrongCount();
+                    setTimeout(() => {
+                        if (wrongBook.length === 0) {
+                            alert("恭喜！你已清空所有错题！");
+                            showHome();
+                        } else {
+                            if (currentIdx >= wrongBook.length) currentIdx = wrongBook.length - 1;
+                            renderQuestion();
+                        }
+                    }, 800);
+                } else {
+                    // 答错，显示错误，等待手动点击下一题
+                    setTimeout(() => {
+                        nextQuestion();
+                    }, 1200);
+                }
+            } else {
+                userAnswers[currentIdx] = optIndex;
+
+                if (optIndex === qData.c) {
+                    score++;
+                } else {
+                    addWrong(currentChapter, currentIdx);
+                }
+
+                const progressKey = `transfusion_ch_${currentChapter}_progress`;
+                localStorage.setItem(progressKey, JSON.stringify({ userAns: userAnswers }));
+
+                renderQuestion();
+                renderAnswerCard();
+
+                if (currentIdx < quizData[currentChapter].questions.length - 1) {
+                    setTimeout(nextQuestion, 850);
+                }
+            }
+        }
+
+        // 答题卡渲染
+        function renderAnswerCard() {
+            if (isWrongBookMode) return;
+
+            const total = quizData[currentChapter].questions.length;
+            
+            const makeCardButton = (i) => {
+                const cell = document.createElement('button');
+                cell.className = "w-full py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center border ";
+                cell.innerText = i + 1;
+
+                if (userAnswers[i] !== null) {
+                    if (isUserAnswerCorrect(currentChapter, i, userAnswers[i])) {
+                        cell.className += "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800";
+                    } else {
+                        cell.className += "bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800";
+                    }
+                } else {
+                    cell.className += "bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
+                }
+
+                if (i === currentIdx) {
+                    cell.className += " ring-2 ring-red-500 ring-offset-2 dark:ring-offset-slate-900";
+                }
+
+                cell.onclick = () => {
+                    currentIdx = i;
+                    renderQuestion();
+                    renderAnswerCard();
+                    toggleMobileDrawer(false);
+                };
+                return cell;
+            };
+
+            const gridDesktop = document.getElementById('answer-card-grid-desktop');
+            gridDesktop.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                gridDesktop.appendChild(makeCardButton(i));
+            }
+
+            const gridMobile = document.getElementById('answer-card-grid-mobile');
+            gridMobile.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                gridMobile.appendChild(makeCardButton(i));
+            }
+        }
+
+        // 添加错题
+        function addWrong(chIdx, qIdx) {
+            const exists = wrongBook.some(item => item.chIdx === chIdx && item.qIdx === qIdx);
+            if (!exists) {
+                wrongBook.push({ chIdx, qIdx });
+                localStorage.setItem('transfusion_wrongs', JSON.stringify(wrongBook));
+                updateWrongCount();
+            }
+        }
+
+        function updateWrongCount() {
+            document.getElementById('wrong-count').innerText = wrongBook.length;
+        }
+
+        // 开启错题挑战
+        function showWrongBook() {
+            if (wrongBook.length === 0) {
+                alert("错题本是空的，真棒！");
+                return;
+            }
+            isWrongBookMode = true;
+            currentIdx = 0;
+            switchScreen('quiz-screen');
+            document.getElementById('chapter-reset-btn').classList.add('hidden');
+            renderQuestion();
+            document.getElementById('answer-card-grid-desktop').innerHTML = '<div class="col-span-5 text-center text-xs text-slate-400 py-4">错题练习中不启用跳转答题卡</div>';
+        }
+
+        // 翻题逻辑
+        function nextQuestion() {
+            const total = isWrongBookMode ? wrongBook.length : quizData[currentChapter].questions.length;
+            if (currentIdx < total - 1) {
+                currentIdx++;
+                renderQuestion();
+                renderAnswerCard();
+            } else {
+                showResult();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                renderQuestion();
+                renderAnswerCard();
+            }
+        }
+
+        function updateStats() {
+            const total = isWrongBookMode ? wrongBook.length : quizData[currentChapter].questions.length;
+            const answeredCount = isWrongBookMode ? 0 : userAnswers.filter(a => a !== null).length;
+            
+            let rightCount = 0;
+            if (!isWrongBookMode) {
+                userAnswers.forEach((ans, idx) => {
+                    if (ans !== null && isUserAnswerCorrect(currentChapter, idx, ans)) rightCount++;
+                });
+            }
+            
+            const currentAccuracy = answeredCount === 0 ? 0 : Math.round((rightCount / answeredCount) * 100);
+            document.getElementById('accuracy').innerText = `${currentAccuracy}%（已答 ${rightCount}/${answeredCount}）`;
+        }
+
+        function finishSection() {
+            if (confirm("确定要提前交卷并结算本次作答情况吗？")) {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            toggleMobileDrawer(false);
+            switchScreen('result-screen');
+            
+            if (isWrongBookMode) {
+                document.getElementById('final-score').innerText = `错题集练习结束！目前错题库中还有 ${wrongBook.length} 道错题等待攻坚。`;
+                document.getElementById('retry-wrong-btn').classList.add('hidden');
+                return;
+            }
+
+            const total = quizData[currentChapter].questions.length;
+            let finalRight = 0;
+            let answered = 0;
+            userAnswers.forEach((ans, idx) => {
+                if (ans !== null) {
+                    answered++;
+                    if (isUserAnswerCorrect(currentChapter, idx, ans)) finalRight++;
+                }
+            });
+
+            document.getElementById('final-score').innerText = `本章总题数：${total}，你完成了 ${answered} 题。其中答对 ${finalRight} 题，答错 ${answered - finalRight} 题。当章最终自测正确率：${answered === 0 ? 0 : Math.round(finalRight/answered*100)}%`;
+            
+            const wrongOnesInCh = userAnswers.map((ans, idx) => (ans !== null && !isUserAnswerCorrect(currentChapter, idx, ans)) ? idx : null).filter(v => v !== null);
+            
+            if (wrongOnesInCh.length > 0) {
+                document.getElementById('retry-wrong-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('retry-wrong-btn').classList.add('hidden');
+            }
+        }
+
+        function retryWrongOnes() {
+            const chWrongs = wrongBook.filter(item => item.chIdx === currentChapter);
+            if (chWrongs.length === 0) {
+                alert("恭喜！本章你已经没有错题了。");
+                showHome();
+                return;
+            }
+            isWrongBookMode = true;
+            currentIdx = 0;
+            switchScreen('quiz-screen');
+            document.getElementById('chapter-reset-btn').classList.add('hidden');
+            renderQuestion();
+        }
+
+        function showHome() {
+            isWrongBookMode = false;
+            switchScreen('home-screen');
+            renderChapterList();
+            updateGlobalStats();
+        }
+
+        function switchScreen(screenId) {
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+
+            document.getElementById(screenId).classList.remove('hidden');
+            
+            if (screenId === 'quiz-screen') {
+                document.getElementById('mobile-fab').classList.remove('hidden');
+            } else {
+                document.getElementById('mobile-fab').classList.add('hidden');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
