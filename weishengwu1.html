@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微生物学智慧学霸自测题库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { light: '#3b82f6', dark: '#60a5fa' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自定义滚动条及优雅动效 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .fade-enter { opacity: 0; transform: translateY(8px); }
+        .fade-enter-active { transition: opacity 0.3s, transform 0.3s; opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-500 selection:text-white">
+
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 rounded-lg text-white font-bold text-lg shadow-md shadow-blue-500/20">🔬</div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">微生物学自测题库</h1>
+                    <p class="text-xs text-slate-400">2026 学霸至尊极速刷题版</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
+                <div class="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex border border-slate-200 dark:border-slate-700">
+                    <button id="btn-mode-card" onclick="switchMode('card')" class="px-3 py-1.5 rounded-lg font-medium transition-all flex items-center space-x-1">
+                        <span>🃏</span> <span class="hidden sm:inline">卡片精刷</span>
+                    </button>
+                    <button id="btn-mode-paper" onclick="switchMode('paper')" class="px-3 py-1.5 rounded-lg font-medium transition-all flex items-center space-x-1">
+                        <span>📜</span> <span class="hidden sm:inline">整卷全览</span>
+                    </button>
+                </div>
+
+                <button id="btn-wrong-notebook" onclick="toggleWrongNotebook()" class="px-3 py-2 rounded-xl font-medium border transition-all flex items-center space-x-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-red-500">
+                    <span>❌</span> <span>错题本</span>
+                    <span id="wrong-badge" class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 font-bold">0</span>
+                </button>
+
+                <select id="chapter-filter" onchange="handleChapterFilter(this.value)" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[150px]">
+                    <option value="all">🌐 全局视图</option>
+                </select>
+
+                <button onclick="resetCurrentScope()" title="重置当前进度" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">🔄</button>
+                <button onclick="toggleDarkMode()" title="切换主题" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">🌓</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <section class="lg:col-span-3 space-y-6">
+            <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="flex justify-between items-center mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <div class="flex items-center space-x-2">
+                        <span id="scope-title">全局进度</span>
+                        <span id="progress-text" class="text-blue-500">0/0</span>
+                    </div>
+                    <div>正确率: <span id="accuracy-text" class="text-emerald-500 font-bold">0%</span></div>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+                </div>
+            </div>
+
+            <div id="empty-state" class="hidden bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center shadow-sm">
+                <div class="text-5xl mb-4">🎉</div>
+                <h3 class="text-lg font-bold text-slate-700 dark:text-slate-300">当前筛选范围内无题目</h3>
+                <p class="text-sm text-slate-400 mt-1">太棒了！错题已被全部消灭，或者请尝试切换章节。</p>
+                <button onclick="clearAllFilters()" class="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors">重置所有筛选条件</button>
+            </div>
+
+            <div id="container-card-mode" class="hidden">
+                <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-100 dark:shadow-none p-6 sm:p-8 relative transition-all">
+                    <div class="flex justify-between items-center mb-6">
+                        <span id="card-chapter" class="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-lg font-medium">章节加载中</span>
+                        <div class="flex items-center space-x-2 text-xs text-slate-400">
+                            <span class="border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">← / → 翻页</span>
+                            <span class="border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">A-E 答题</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 id="card-question-title" class="text-lg sm:text-xl font-bold leading-relaxed">题目正文加载中...</h2>
+                    </div>
+
+                    <div id="card-options" class="space-y-3 mb-8"></div>
+
+                    <div id="card-analysis" class="hidden border-t border-slate-100 dark:border-slate-800 pt-6 mt-6 bg-slate-50 dark:bg-slate-900/50 -mx-6 sm:-mx-8 px-6 sm:px-8 pb-2 rounded-b-3xl">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span id="analysis-status-icon" class="text-xl"></span>
+                            <span id="analysis-status-text" class="font-bold text-sm"></span>
+                        </div>
+                        <p class="text-sm leading-relaxed"><span class="font-semibold text-blue-500">正确答案：</span><span id="card-correct-answer" class="font-bold text-base text-emerald-500"></span></p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-4">
+                    <button onclick="prevCard()" class="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center space-x-1">
+                        <span>👈</span> <span>上一题</span>
+                    </button>
+                    <span id="card-index-indicator" class="text-sm font-medium text-slate-400">0 / 0</span>
+                    <button onclick="nextCard()" class="px-4 py-2.5 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/10 font-medium hover:bg-blue-700 transition-colors flex items-center space-x-1">
+                        <span>下一题</span> <span>👉</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="container-paper-mode" class="hidden space-y-6"></div>
+        </section>
+
+        <aside class="lg:col-span-1 space-y-6">
+            <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+                <h3 class="font-bold text-sm mb-3 text-slate-400 uppercase tracking-wider">实时数据监控</h3>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div id="stat-total" class="text-xl font-black text-slate-700 dark:text-slate-200">0</div>
+                        <div class="text-xs text-slate-400">有效题数</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div id="stat-answered" class="text-xl font-black text-blue-500">0</div>
+                        <div class="text-xs text-slate-400">已答题数</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div id="stat-correct" class="text-xl font-black text-emerald-500">0</div>
+                        <div class="text-xs text-slate-400">答对题数</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div id="stat-wrong" class="text-xl font-black text-rose-500">0</div>
+                        <div class="text-xs text-slate-400">错题留存</div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button onclick="factoryReset()" class="w-full py-2 text-center text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 rounded-xl font-medium transition-colors">🔥 销毁并清除全部离线缓存</button>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-sm text-slate-400 uppercase tracking-wider">快捷定位矩阵</h3>
+                    <span class="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">可点击</span>
+                </div>
+                <div id="matrix-grid" class="grid grid-cols-5 gap-1.5 max-h-[360px] overflow-y-auto pr-1">
+                    </div>
+            </div>
+        </aside>
+    </main>
+
+    <script id="raw-data-source" type="text/plain">
+1.关于抗菌药物联合用药，不正确的说法是
+A.可以减少药物剂量以避免达到毒性剂量
+B.预防或推迟细菌耐药性的发生
+C.对某些耐药细菌引起的严重感染，联合用药比单一用药时效果更好
+D.可用于病因未明的严重感染
+E.用于治疗混合性感染
+答案：D
+难易程度：易
+题型：单选题
+2.下列哪种细菌接种在M-H琼脂上生长不良
+A.肺炎链球菌
+B.金黄色葡萄球菌
+C.肺炎克雷白菌
+D.大肠埃希菌
+E.鲍曼不动杆菌
+答案：A
+难易程度：易
+题型：单选题
+3.仅用于治疗泌尿道感染的抗菌药物是
+A.A组
+B.B组
+C.C组
+D.O组
+E.U组
+答案：E
+难易程度：易
+题型：单选题
+4.WHO推荐的定性药敏试验方法是
+A.K-B法
+B.常量肉汤稀释法
+C.琼脂稀释法
+D.微量肉汤稀释法
+E.以上都不是
+答案A
+难易程度：易
+题型：单选题
+5.MBC是指
+A.最小杀菌浓度
+B.最大杀菌浓度
+C.最小抑菌浓度
+D.最大抑菌浓度
+E.药物浓度
+答案：A
+难易程度：易
+题型：单选题
+6.下列选项中，不属于ESBLs主要产生菌的是
+A.大肠埃希菌
+B.肺炎克雷白菌
+C.阴沟肠杆菌
+D.变形杆菌
+E.伤寒沙门菌
+答案：E
+难易程度：中
+题型：单选题
+1.弧菌科的共同特点是
+A.有鞭毛，氧化酶阳性，发酵葡萄糖
+B.氧化酶阳性，有鞭毛，甘露醇阳性
+C.耐盐，有鞭毛，氧化酶阴性
+D.耐盐，有鞭毛，氧化酶阳性
+E.都不是
+答案：A
+难易程度：易
+题型：单选题
+2.气单胞菌与肠杆菌科的主要鉴别试验是
+A.O-F试验
+B.氧化酶试验
+C.V-P试验
+D.吲哚试验
+E.水杨苷试验
+答案：B
+难易程度：易
+题型：单选题
+3.弧菌科细菌区别于肠杆菌科细菌的特征为
+A.氧化酶阳性
+B.有动力
+C.发酵葡萄糖
+D.有鞭毛
+E.吲哚试验阳性
+答案：A
+难易程度：易
+题型：单选题
+4.下列微生物中，可导致患者粪便呈“米泔水”样的是
+A.大肠埃希菌
+B.痢疾志贺菌
+C.伤寒沙门菌
+D.霍乱弧菌
+E.金黄色葡萄球菌
+答案：D
+难易程度：中
+题型：单选题
+5.我国沿海地区食物中毒最常见的病原菌为
+A.霍乱弧菌
+B.副溶血弧菌
+C.金黄色葡萄球菌
+D.拟态弧菌
+E.伤寒沙门菌
+答案：B
+难易程度：易
+题型：单选题
+6.具有神奈川现象的细菌是
+A.大肠埃希菌
+B.霍乱弧菌
+C.副溶血弧菌
+D.小肠结肠炎耶尔森菌
+E.幽门螺杆菌
+答案：C
+难易程度：中
+题型：单选题
+7.既能分解色氨酸又能还原硝酸盐的试验是
+A.霍乱红试验
+B.甲基红试验
+C.ONPG试验
+D.七叶苷试验
+E.苯丙氨酸脱氨酶试验
+答案：A
+难易程度：中
+题型：单选题
+8.用于鉴别古典生物型和Eltor生物型的试验是
+A.霍乱红试验
+B.多黏菌素B敏感试验
+C.耐盐试验
+D.氧化酶试验
+E.黏丝试验
+答案：B
+难易程度：难
+题型：单选题
+9.副溶血性弧菌增菌培养时选用
+A.碱性蛋白胨水
+B.GN肉汤
+C.1%NaCl碱性蛋白胨水
+D.胆汁葡萄糖肉汤
+E.亚硒酸盐增菌肉汤
+答案：C
+难易程度：中
+题型：单选题
+霍乱弧菌增菌培养时选用
+A.碱性蛋白胨水
+B.GN肉汤
+C.1%NaCl碱性蛋白胨水
+D.胆汁葡萄糖肉汤
+E.亚硒酸盐增菌肉汤
+答案：A
+难易程度：中
+题型：单选题
+11.可用于鉴别弧菌属和气单胞菌属的是
+A.氧化酶试验
+B.发酵葡萄糖
+C.形态鉴别
+D.耐盐试验
+E.有动力
+答案：D
+难易程度：中
+题型：单选题
+1.培养时需要微需氧环境的细菌是
+A.霍乱弧菌
+B.副溶血弧菌
+C.气单胞菌
+D.邻单胞菌
+E.空肠弯曲菌
+答案：E
+难易程度：易
+题型：单选题
+2.革兰染色阴性，菌体弯曲或呈S形、海鸥展翅形，氧化酶和触酶阳性，对奈啶酸敏感、对头孢噻吩耐药的细菌可能是
+A.霍乱弧菌
+B.副溶血弧菌
+C.胎儿弯曲菌
+D.邻单胞菌
+E.空肠弯曲菌
+答案：E
+难易程度：易
+题型：单选题
+3.革兰染色阴性，菌体弯曲或呈S形、海鸥展翅形，氧化酶和触酶阳性，对奈啶酸耐药、对头孢噻吩敏感的细菌可能是
+A.霍乱弧菌
+B.副溶血弧菌
+C.胎儿弯曲菌
+D.邻单胞菌
+E.空肠弯曲菌
+答案：C
+难易程度：中
+题型：单选题
+4.与慢性浅表性胃炎有关的细菌是
+A.空肠弯曲菌
+B.幽门螺杆菌
+C.霍乱弧菌
+D.副溶血弧菌
+E.气单胞菌
+答案：B
+难易程度：易
+题型：单选题
+5.在一般培养基上不生长，常用含血清的哥伦比亚高营养培养基培养的细菌是
+A.邻单胞菌
+B.幽门螺杆菌
+C.霍乱弧菌
+D.副溶血弧菌
+E.气单胞菌
+答案：B
+难易程度：易
+题型：单选题
+1.分枝杆菌一般需培养多长时间才能长出肉眼可见菌落
+A.1～2天
+B.3～5天
+C.6～9天
+D.10～13天
+E.14天以上
+答案：E
+难易程度：易
+题型：单选题
+2.结核分枝杆菌复合群不包括
+A.结核分枝杆菌
+B.牛分枝杆菌
+C.田鼠分枝杆菌
+D.非洲分枝杆菌
+E.龟分枝杆菌
+答案：E
+难易程度：易
+题型：单选题
+3.下列选项中，不属于结核分枝杆菌细胞壁脂质的是
+A.索状因子
+B.磷脂
+C.硫酸脑苷脂
+D.脂多糖
+E.蜡质D
+答案：D
+难易程度：易
+题型：单选题
+4.具有抗酸性的微生物不包括
+A.分枝杆菌
+B.诺卡菌属
+C.钩端螺旋体
+D.红球菌属
+E.隐孢子菌属包囊
+答案C
+难易程度：易
+题型：单选题
+5.非结核分枝杆菌不包括
+A.鸟分枝杆菌复合群
+B.瘰疠分枝杆菌
+C.偶发分枝杆菌
+D.麻风分枝杆菌
+E.堪萨斯分枝杆菌
+答案：D
+难易程度：易
+题型：单选题
+6.分枝杆菌抵抗盐酸乙醇脱色的主要物质基础是
+A.肽聚糖
+B.脂多糖
+C.分枝菌酸
+D.磷壁酸
+E.脂蛋白
+答案：C
+难易程度：易
+题型：单选题
+1.白喉棒状杆菌的形态特征是
+A.芽胞呈鼓槌状
+B.有异染颗粒
+C.排列呈竹节状
+D.G有鞭毛
+E.G有荚膜
+答案：B
+难易程度：易
+题型：单选题
+2.培养白喉棒状杆菌常用的培养基为
+A.罗氏培养基
+B.普通培养基
+C.吕氏培养基
+D.厌氧培养基
+E.沙氏培养基
+答案：C
+难易程度：易
+题型：单选题
+3.下列细菌中属于需氧芽胞杆菌的是
+A.艰难梭菌
+B.炭疽芽胞杆菌
+C.产气荚膜梭菌
+D.肉毒梭菌
+E.白喉棒状杆菌
+答案：B
+难易程度：易
+题型：单选题
+4.人类最常见的炭疽病是
+A.肺炭疽
+B.肠炭疽
+C.皮肤炭疽
+D.肝炭疽
+E.炭疽性脑膜炎
+答案C
+难易程度：易
+题型：单选题
+5.在肉汤中呈沉淀生长的细菌是
+A.铜绿假单胞菌
+B.产单核细胞李斯特菌
+C.蜡样芽胞杆菌
+D.脑膜炎奈瑟菌
+E.炭疽芽胞杆菌
+答案：E
+难易程度：易
+题型：单选题
+6.下列细菌中，其菌落低倍镜下观察为卷发状的是
+A.产单核细胞李斯特菌
+B.炭疽芽胞杆菌
+C.白喉棒状杆菌
+D.阴道加特纳菌
+E.流感嗜血杆菌
+答案：B
+难易程度：易
+题型：单选题
+7.菌落呈“融蜡状”的细菌是
+A.破伤风梭菌
+B.产气荚膜梭菌
+C.结核分枝杆菌
+D.白喉棒状杆菌
+E.蜡样芽胞杆菌
+答案：E
+难易程度：中
+题型：单选题
+8.可进行“冷增菌”的细菌是
+A.艰难梭菌
+B.红斑丹毒丝菌
+C.产单核细胞李斯特菌
+D.蜡样芽胞杆菌
+E.副溶血性弧菌
+答案：C
+难易程度：易
+题型：单选题
+9.与动物感染有关的细菌是
+A.流感嗜血杆菌
+B.百日咳鲍特菌
+C.布鲁菌
+D.麻风分枝杆菌
+E.军团菌
+答案：C
+难易程度：中
+题型：单选题
+10.下列细菌中20～25℃动力(+)，37℃动力 缓慢或无 的是
+A.志贺菌
+B.变形杆菌
+C.红斑丹毒丝菌
+D.鼠疫耶尔森菌
+E.产单核细胞李斯特菌
+答案：E
+难易程度：中
+题型：单选题
+11.某 company 17名员工吃了食堂的炒米饭，先后出现食物中毒症状，剩余炒米饭镜检见大量革兰阳性粗大芽胞杆菌。分离培养血琼脂平板上的菌落扁平、边缘不齐、灰白色似毛玻璃状，有透明溶血环；镜检为革兰阳性粗大芽胞杆菌，芽胞卵圆形，小于菌体，居中央或一端。该菌可能是
+A.白喉棒状杆菌
+B.鼠伤寒沙门菌
+C.产单核细胞李斯特菌
+D.蜡样芽胞杆菌
+E.变形杆菌
+答案：D
+难易程度：难
+题型：单选题
+12.一患者皮肤出现中央发黑呈痈样化脓灶，取分泌物涂片革兰染色镜检发现革兰阳性竹节状排列大杆菌，且有荚膜，初步判断是下列哪种细菌引起的
+A.蜡样芽胞杆菌
+B.破伤风梭菌
+C.产单核细胞李斯特菌
+D.炭疽芽胞杆菌
+E.类白喉棒状杆菌
+答案：D
+难易程度：难
+题型：单选题
+13.某患者，喝牛奶后出现食物中毒症状，取剩余牛奶经4℃冷增菌后分离鉴定，该菌为革兰阳性小杆菌，25℃动力阳性、37℃无动力、CAMP试验阳性，触酶阳性，耐盐耐碱耐
+胆汁，据此判断最可能的细菌是
+A.B群链球菌
+B.鼠伤寒沙门菌
+C.产单核细胞李斯特菌
+D.蜡样芽胞杆菌
+E.金黄色葡萄球菌
+答案：C
+难易程度：难
+题型：单选题
+1.百日咳鲍特菌分离培养时宜选用的培养基是
+A.庆大培养基
+B.鲍-金培养基
+C.巧克力培养基
+D.BCYE培养基
+E.L-J培养基
+答案：B
+难易程度：易
+题型：单选题
+2.百日咳鲍特菌在鲍-金培养基上生长的菌落颜色为
+A.白色
+B.褐色
+C.银灰色
+D.红色
+E.黑色
+答案：C
+难易程度：易
+题型：单选题
+3.专性细胞内寄生或引起严重并发症的是流感嗜血杆菌的婴幼儿肺炎患者，其常见的严重并发症是
+A.肾衰竭
+B.脑膜炎
+C.腹泻
+D.肝性脑病
+E.肺脓肿
+答案：B
+难易程度：易
+题型：单选题
+4.人类布鲁菌病的热型特点是
+A.回归热
+B.波浪热
+C.稽留热
+D.弛张热
+E.间歇热
+答案B
+难易程度：易
+题型：单选题
+5.流感嗜血杆菌常用的培养基是
+A.血平板
+B.SS培养基
+C.巧克力色培养基
+D.TCBS培养基
+E.L-J培养基
+答案：C
+难易程度：易
+题型：单选题
+6.培养百日咳鲍特菌常用的标本是
+A.血液
+B.鼻咽拭子
+C.尿液
+D.阴道分泌物
+E.胸水
+答案：B
+难易程度：易
+题型：单选题
+7.出现“卫星现象”的原因是由于金黄色葡萄球菌能合成大量
+A.生长因子
+B.V因子
+C.X因子
+D.维生素B₁
+E.V因子+X因子
+答案：B
+难易程度：中
+题型：单选题
+8.食入未经消毒的羊奶，最有可能引起的疾病或临床表现是
+A.结核
+B.波浪热
+C.破伤风
+D.伤寒
+E.痢疾
+答案：B
+难易程度：易
+题型：单选题
+9.与动物感染有关的细菌是
+A.流感嗜血杆菌
+B.百日咳鲍特菌
+C.布鲁菌
+D.麻风分枝杆菌
+E.军团菌
+答案：C
+难易程度：中
+题型：单选题
+10.流感嗜血杆菌可引起的疾病中不包括
+A.鼻咽炎
+B.慢性支气管炎
+C.败血症
+A.流行性感冒
+E.中耳炎
+答案：D
+难易程度：中
+题型：单选题
+11.关于嗜肺军团菌的描述，不正确的是
+A.生长缓慢
+B.生存能力强
+C.革兰染色阳性
+D.有端鞭毛和菌毛，无荚膜和芽胞
+E.主要致病物质包括菌毛、侵袭性酶类和内毒素
+答案：C
+难易程度：中
+题型：单选题
+1.血平板上形成双层溶血环的细菌是
+A.金黄色葡萄球菌
+B.肺炎链球菌
+C.破伤风梭菌
+D.产气荚膜梭菌
+E.白喉杆菌
+答案：D
+难易程度：易
+题型：单选题
+2.引起气性坏疽的细菌是
+A.乙型溶血性链球菌
+B.肉毒梭菌
+C.炭疽芽胞杆菌
+D.结核分枝杆菌
+E.产气荚膜杆菌
+答案：E
+难易程度：易
+题型：单选题
+3.肉毒毒素的特点是
+A.可被肠道蛋白酶水解
+B.引起肌肉强直性收缩
+C.引起肌肉大块坏死
+D.主要经过消化道吸收
+E.耐热
+答案：D
+难易程度：易
+题型：单选题
+4.油镜下呈“网球拍”状的细菌是
+A.白喉杆菌
+B.枯草杆菌
+C.炭疽杆菌
+D.产气荚膜杆菌
+E.肉毒梭菌
+答案：E
+难易程度：易
+题型：单选题
+5.破伤风抗毒素治疗破伤风的机制是
+A.中和游离的外毒素
+B.中和与神经细胞结合的外毒素
+C.抑制破伤风杆菌生长
+D.在补体参与下溶解破坏破伤风杆菌
+E.减轻临床症状
+答案：A
+难易程度：易
+题型：单选题
+6.下列细菌中，可致抗生素相关性伪膜性肠炎的是
+A.破伤风梭菌
+B.产气荚膜梭菌
+C.艰难梭菌
+D.诺危梭菌
+E.肉毒梭菌
+答案：C
+难易程度：中
+题型：单选题
+7.脓胸患者，怀疑厌氧菌感染，抽取脓汁后正确的运送方式是
+A.注入无菌试管内
+B.针筒运送
+C.注入血培养瓶内
+D.注入无菌小瓶内
+E.无菌拭子蘸取后放到增菌管内
+答案：B
+难易程度：中
+题型：单选题
+8.一开放性骨折患者并有大面积组织撕裂伤，伤口局部剧烈肿胀，触摸有捻发感，并有恶臭，病变发展迅速，伤口深部细菌涂片可见革兰阳性粗大杆菌和革兰阴性杆菌，可能感染
+A.破伤风梭菌
+B.产气荚膜梭菌
+C.艰难梭菌
+D.炭疽杆菌
+E.肉毒梭菌
+答案：B
+难易程度：中
+题型：单选题
+9.患者男，58岁。有三十余年吸烟史，缓起发热、咳嗽，咳脓臭痰，胸片显示右下肺大片浸润阴影，内有空洞并见液体，痰涂片找到细菌，但需氧培养多次阴性，诊断应首先考虑
+A.真菌感染
+B.军团菌感染
+C.大肠埃希菌感染
+D.肺炎链球菌感染
+E.厌氧菌感染
+答案：E
+难易程度：难
+题型：单选题
+1.在病灶或脓样物质中见到“硫磺样颗粒”,最可能的病原是
+A.白假丝酵母菌
+B.新生隐球菌
+C.藤黄微球菌
+D.衣氏放线菌
+E.伯氏疏螺旋体
+答案：D
+难易程度：易
+题型：单选题
+2.以下病原体中，可引起内源性感染、好发颈部和颜面部的为
+A.支原体
+B.衣原体
+C.立克次体
+D.放线菌
+E.真菌
+答案：D
+难易程度：易
+题型：单选题
+3.诺卡菌广泛存在于
+A.口腔
+B.皮肤
+C.肠道
+D.土壤
+E.水源
+答案：D
+难易程度：易
+题型：单选题
+4.诺卡菌引起的感染多为
+A.内源性感染
+B.外源性感染
+C.动物咬伤后感染
+D.接触感染
+E.昆虫叮咬后感染
+答案B
+难易程度：易
+题型：单选题
+1.立克次体与病毒的共同特点是
+A.对抗生素敏感
+B.以二分裂方式繁殖
+C.无细胞壁和细胞膜
+D.专性细胞内寄生
+E.必须以节肢动物为媒介进行传播
+答案：D
+难易程度：易
+题型：单选题
+2.以人虱为传播媒介的微生物为
+A.布鲁菌
+B.普氏立克次体
+C.鹦鹉热立克次体
+D.钩端螺旋体
+E.鼠疫杆菌
+答案：B
+难易程度：易
+题型：单选题
+3.可辅助诊断斑疹伤寒的试验为
+A.链球菌MG株凝集试验
+B.VDRL试验
+C.Weil-Felix test
+A.OT试验
+E.ASO试验
+答案：C
+难易程度：中
+题型：单选题
+4.立克次体与细菌之间的主要区别是
+A.有细胞壁、核糖体
+B.有DNA、RNA两种核酸
+C.严格的细胞内寄生
+D.二分裂法繁殖
+E.可造成自然疫源性疾病
+答案：C
+难易程度：易
+题型：单选题
+5.贝纳柯克斯体所致的疾病是
+A.流行性斑疹伤寒
+B.地方性斑疹伤寒
+C.恙虫病
+D.Q热
+E.传染性单核细胞增多症
+答案：D
+难易程度：易
+题型：单选题
+6.可用外-斐反应辅助诊断的是
+A.沙眼
+B.肺结核
+C.斑疹伤寒
+D.包涵体性结膜炎
+E.钩体病
+答案：C
+难易程度：易
+题型：单选题
+7.不可以用于普氏立克次体分离培养或诊断的方法有
+A.患者血清抗体检查
+B.豚鼠接种
+C.细胞培养
+D.鸡胚卵黄囊培养
+E.人工培养基培养
+答案：E
+难易程度：易
+题型：单选题
+8.患者男，60岁。15天前曾去郊外爬山，其间腿部被叮咬，局部出现溃疡，伴高热、皮疹、淋巴结肿大、肝(脾)大。外-斐反应检测，患者血清与变形杆菌OXk株抗原反应的抗
+体效价为1:320,患者可能感染的微生物是
+A.恙虫病
+B.流行性斑疹伤寒
+C.衣原体
+D.螺旋体
+E.结核分枝杆菌
+答案：A
+难易程度：易
+题型：单选题
+1.常引起败血症的细菌是
+A.白喉棒状杆菌
+B.破伤风梭菌
+C.铜绿假单胞菌菌
+D.百日咳鲍特菌
+E.肉毒梭菌
+答案：C
+难易程度：易
+题型：单选题
+2.显微镜下为革兰阴性杆菌，确定其为非发酵菌的最关键试验是
+A.乳糖分解试验
+B.硝酸盐还原试验
+C.O-F试验
+D.动力试验
+E.触酶试验
+答案：C
+难易程度：易
+题型：单选题
+3.在非发酵菌的初步分属鉴定中，不常用的试验是
+A.吲哚试验
+B.氧化酶试验
+C.O-F试验
+D.动力试验
+E.触酶试验
+答案：E
+难易程度：易
+题型：单选题
+4.在4℃条件下生长并且可在普通冰箱储存血液中生长繁殖，污染血液，自溶后释放内毒素，导致输血后不可逆性休克的细菌是
+A.荧光假单胞菌
+B.恶臭假单胞菌
+C.斯氏假单胞菌
+D.铜绿假单胞菌
+E.鼻疽伯克霍尔德菌
+答案A
+难易程度：易
+题型：单选题
+5.铜绿假单胞菌的特征是
+A.兼性厌氧菌
+B.具有周鞭毛的革兰阴性菌
+C.在液体培养基中形成菌膜，菌液呈蓝绿色
+D.是人类皮肤和黏膜表面的常居菌
+E.麦康凯平板上很难生长
+答案：C
+难易程度：易
+题型：单选题
+6.接种于肉汤中培养24小时呈均匀混浊，表面可形成菌膜，管底可形成沉淀，在含蛋白胨的肉汤中产氨，使溶液呈碱性的是
+A.恶臭假单胞菌
+B.溶血不动杆菌
+C.嗜麦芽窄食单胞菌
+D.粪产碱杆菌
+E.洋葱伯克霍尔德菌
+答案：D
+难易程度：中
+题型：单选题
+7.鲍曼不动杆菌的特点不包括
+A.氧化酶试验阴性
+B.O-F试验为产碱型
+C.无动力
+D.麦康凯上生长良好
+E.触酶试验阳性
+答案：B
+难易程度：中
+题型：单选题
+8.不动杆菌的生物学特征中“三阴”是指
+A.DNA酶阴性，氧化酶试验阴性，动力阴性
+B.氧化酶试验阴性，动力阴性，革兰阴性杆菌
+C.动力阴性，硝酸盐还原试验阴性，DNA酶阴性
+D.氧化酶试验阴性，硝酸盐还原试验阴性，DNA酶阴性
+E.氧化酶试验阴性，硝酸盐还原试验阴性，凝固酶阴性
+答案：B
+难易程度：难
+题型：单选题
+9.嗜麦芽窄食单胞菌的生化反应是
+A.氧化酶试验阳性，缓慢氧化葡萄糖，DNA酶阳性
+B.氧化酶试验阳性，快速氧化麦芽糖，动力阳性
+C.氧化酶试验阴性，可迅速氧化分解麦芽糖，O/F试验为氧化型
+D.氧化酶试验阴性，缓慢氧化葡萄糖，产生吲哚
+E.氧化酶试验阴性，氧化麦芽糖，动力阴性
+答案：C
+难易程度：难
+题型：单选题
+10.患者女，22岁。住院一周后出现呼吸道感染症状，实验室细菌检查结果为革兰阴性球杆菌，氧化酶试验和动力均为阴性，应考虑引起这一感染的细菌是
+A.铜绿假单胞菌
+B.不动杆菌
+C.莫拉菌
+D.产碱杆菌
+E.窄食单胞菌
+答案：B
+难易程度：难
+题型：单选题
+11.某病人行断肢再植术后，在手术创面出现脓性分泌物。经培养，血平板上有扁平、枫叶状带金属光泽的大菌落生长，具生姜味，有水溶性绿色色素。此菌很可能是
+A.金黄色葡萄糖球菌
+B.草绿色链球菌
+C.嗜麦芽窄食单胞菌
+D.铜绿假单胞菌
+E.大肠埃希菌
+答案：D
+难易程度：难
+题型：单选题
+12.引起烧伤后败血症最常见、最严重的细菌为
+A.大肠埃希菌
+B.肺炎链球菌
+C.铜绿假单胞菌
+D.产气肠杆菌
+E.枸橼酸杆菌
+答案：C
+难易程度：易
+题型：单选题
+13.对营养要求不高，菌落可呈平滑、黏液状、干燥或皱褶状。培养1～2天，呈小而光滑的菌落，随培养时间的延长，菌落变干燥、发皱，形成类似于“车轮胎样”菌落的细菌是
+A.假单胞菌
+B.不动杆菌
+C.产碱杆菌
+D.窄食单胞菌
+E.类鼻疽伯克霍尔德菌
+答案：E
+难易程度：难
+题型：单选题
+14.在血平板上生长，不会出现溶血现象的是
+A.鲍曼不动杆菌
+B.铜绿假单胞菌
+C.金黄色葡萄球菌
+D.A群链球菌
+E.肺炎链球菌
+答案：A
+难易程度：难
+题型：单选题
+15.在血平板上生长形成黄色菌落，培养48小时菌落可出现“猫眼”现象的是
+A.铜绿假单胞菌
+B.鲍曼不动杆菌
+C.粪产碱杆菌
+D.嗜麦芽窄食单胞菌
+E.洛菲不动杆菌
+答案：D
+难易程度：中
+题型：单选题
+1.沙眼衣原体属于
+A.原核细胞型微生物
+B.非细胞型微生物
+C.真核细胞型微生物
+D.真菌
+E.病毒
+答案：A
+难易程度：易
+题型：单选题
+2.不是由沙眼衣原体导致的疾病是
+A.沙眼
+B.性病淋巴肉芽肿
+C.非淋菌性尿道炎
+D.包涵体结膜炎
+E.复视
+答案：E
+难易程度：易
+题型：单选题
+患者男，26岁。一周来下腹不适，尿道口发热、发痒、有烧灼感。查体尿道口内有浆液性分泌物，涂片镜检白细胞(+),上皮细胞(+)。推测可能感染的微生物是
+A.沙门菌属
+B.大肠埃希菌
+C.淋病奈瑟菌
+D.链球菌
+E.沙眼衣原体
+答案：E
+难易程度：中
+题型：单选题
+4.衣原体与病毒的相同点是
+A.有DNA和RNA两种核酸
+B.严格细胞内寄生
+C.以二分裂法增殖，有独特的发育周期
+D.有核糖体
+E.对抗生素敏感
+答案：B
+难易程度：易
+题型：单选题
+1.检测包涵体可作为
+A.衡量病毒毒力强弱的标准
+B.病毒在细胞内增殖的标志之一
+C.测定病毒数量的指标
+D.鉴定病毒的特异性依据
+E.病毒分类依据
+答案：B
+难易程度：易
+题型：单选题
+2.制备病毒疫苗最常选用
+A.原代细胞培养
+B.次代细胞培养
+C.人二倍体细胞培养
+D.传代细胞培养
+E.器官培养
+答案：C
+难易程度：易
+题型：单选题
+3.细胞病变效应不包括
+A.细胞变圆脱落
+B.细胞融合
+C.细胞裂解
+D.干扰现象
+E.形成包涵体
+答案：D
+难易程度：易
+题型：单选题
+4.最能直接证明病毒在组织细胞中生长的指标是
+A.pH改变
+B.红细胞吸附
+C.干扰现象
+D.细胞病变
+E.蚀斑
+答案：D
+难易程度：易
+题型：单选题
+5.从患者咽漱液中分离流感病毒最好接种于
+A.小鼠腹腔
+B.鸡胚羊膜腔
+C.鸡胚尿囊腔
+D.人胚羊膜细胞
+E.Hela细胞
+答案：B
+难易程度：易
+题型：单选题
+6.内基小体有重要意义的诊断是
+A.狂犬病
+B.流感
+C.麻疹
+D.疱疹
+E.腮腺炎
+答案：A
+难易程度：中
+题型：单选题
+7.专性细胞内寄生或易检到狂犬病毒包涵体的组织是
+A.血液
+B.骨髓
+C.淋巴结
+D.大脑海马回
+E.外周神经组织
+答案：D
+难易程度：中
+题型：单选题
+8.可产生细胞核内包涵体的病毒不包括
+A.巨细胞病毒
+B.单纯疱疹病毒
+C.水痘-带状疱疹病毒
+D.腺病毒
+E.狂犬病毒
+答案：E
+难易程度：中
+题型：单选题
+1.登革病毒的传播媒介是
+A.蚊
+B.蜱
+C.虱
+D.蚤
+E.螨
+答案：A
+难易程度：易
+题型：单选题
+2.乙型脑炎早期诊断的方法应首选
+A.病毒分离
+B.中和试验
+C.血凝抑制试验
+D.补体结合试验
+E.特异性IgM抗体测定
+答案：E
+难易程度：易
+题型：单选题
+3.汉坦病毒的自然宿主是
+A.蚊
+B.蜱
+C.鼠类
+D.蚤
+E.螨
+答案：C
+难易程度：易
+题型：单选题
+4.肾综合征出血热的病原体是
+A.汉坦病毒
+B.登革病毒
+C.新疆出血热病毒
+D.埃博拉病毒
+E.脊髓灰质炎病毒
+答案：A
+难易程度：易
+题型：单选题
+5.内基小体是
+A.衣原体包涵体
+B.麻疹病毒包涵体
+C.腺病毒包涵体
+D.狂犬病病毒包涵体
+E.疱疹病毒包涵体
+答案：D
+难易程度：易
+题型：单选题
+6.感染人体引起“恐水症”的病毒是
+A.流行性乙型脑炎病毒
+B.狂犬病病毒
+C.登革病毒
+D.黄病毒
+E.肾综合征出血热病毒
+答案：B
+难易程度：易
+题型：单选题
+7.易检出狂犬病病毒嗜酸性包涵体的组织是
+A.肌肉
+B.骨髓
+C.大脑海马回
+D.淋巴结
+E.外周神经组织
+答案：C
+难易程度：易
+题型：单选题
+8.HPV的靶细胞是
+A.皮肤黏膜细胞
+B.吞噬细胞
+C.肝细胞
+D.淋巴细胞
+E.神经细胞
+答案：A
+难易程度：易
+题型：单选题
+9.通过神经扩散的嗜神经病毒是
+A.乙型脑炎病毒
+B.狂犬病病毒
+C.人乳头瘤病毒
+D.人类免疫缺陷病毒
+E.乙型肝炎病毒
+答案：B
+难易程度：易
+题型：单选题
+1.肠道致病菌与非致病菌的初步鉴别试验是
+A.吲哚试验
+B.尿素分解试验
+C.乳糖发酵试验
+D.H2S试验
+E.胆汁溶解试验
+答案：C
+难易程度：易
+题型：单选题
+2.肠杆菌科细菌不具有的抗原是
+A.M抗原
+B.H抗原
+C.O抗原
+D.K抗原
+E.Vi抗原
+答案：A
+难易程度：易
+题型：单选题
+3.下列临床标本进行细菌学检验时需要先增菌的是
+A.脑脊液
+B.尿液
+C.粪便
+D.脓汁
+E.咽拭子
+答案：A
+难易程度：易
+题型：单选题
+4.下列选项中，肠杆菌科细菌生化反应的共性是
+A.动力试验(+)
+B.触酶试验(-)
+C.氧化酶试验(+)
+D.吲哚试验(+)
+E.硝酸盐还原试验(+)
+答案：E
+难易程度：中
+题型：单选题
+5.O157 : H7在山梨醇麦康凯琼脂平板上的菌落颜色为
+A.无色或淡黄色
+B.绿色
+C.黑色
+D.红色
+E.蓝色
+答案：A
+难易程度：易
+题型：单选题
+6.痢疾志贺菌致病的首要因素是
+A.菌毛
+B.肠毒素
+C.细菌素
+D.酶类
+E.荚膜
+答案：A
+难易程度：中
+题型：单选题
+7.肠杆菌属细菌IMViC的反应模式是
+A.--++
+B.-+-+
+C.++--
+D.+-+-
+E.+--+
+答案：A
+难易程度：中
+题型：单选题
+8.鼠疫耶尔森菌在肉汤培养基中生长48小时后的特点是
+A.沉淀生长
+B.贴壁生长
+C.形成菌膜，稍加摇动呈“钟乳石”状下垂
+D.云雾状生长
+E.均匀混浊生长
+答案：C
+难易程度：中
+题型：单选题
+9.在BAP琼脂平板上呈大而圆、灰白色、黏稠状菌落，菌落相互融合、光亮，以接种环触之，可拉成丝的细菌是
+A.大肠埃希菌
+B.伤寒沙门菌
+C.痢疾志贺菌
+D.肺炎克雷白菌
+E.鼠疫耶尔森菌
+答案：D
+难易程度：中
+题型：单选题
+10.大肠埃希菌的IMViC结果为
+A.--++
+B.-+-+
+C.++--
+D.+-+-
+E.+--+
+答案：C
+难易程度：难
+题型：单选题
+11.普罗威登菌属与摩根菌属的主要鉴别点是
+A.鸟氨酸脱羧酶
+B.氧化酶试验
+C.动力试验
+D.脲酶试验
+E.苯丙氨酸脱氨酶试验
+答案：A
+难易程度：难
+题型：单选题
+12.将某待检细菌接种至肉汤培养基，开始呈混浊生长，24小时后表现为沉淀生长，48小时后逐渐形成菌膜，稍加摇动后呈“钟乳石状“下垂。此种生长现象见于下列细菌中的
+A.奇异变形杆菌
+B.产碱普罗威登菌
+C.肺炎克雷白菌
+D.鼠疫耶尔森菌
+E.伤寒沙门菌
+答案：D
+难易程度：中
+题型：单选题
+13.肠杆菌科与弧菌科细菌的鉴别可采用
+A.细菌形态
+B.染色性
+C.硝酸盐还原试验
+D.氧化酶试验
+E.触酶试验
+答案：D
+难易程度：中
+题型：单选题
+14.埃希菌属在KIA培养基上的反应模式是
+A.K/A不产气 硫化氢-
+B.A/A产气   硫化氢-
+C.K/A不产气 硫化氢+
+D.A/A不产气 硫化氢-
+E.A/A产气   硫化氢+
+答案：B
+难易程度：难
+题型：单选题
+15.沙门菌属在KIA培养基上的反应模式是
+A.K/A不产气 硫化氢-
+B.A/A产气   硫化氢-
+C.K/A产气 硫化氢+
+D.A/A不产气 硫化氢-
+E.A/A产气   硫化氢+
+答案：C
+难易程度：难
+题型：单选题
+16.志贺菌属在KIA培养基上的反应模式是
+A.K/A不产气 硫化氢-
+B.A/A产气   硫化氢-
+C.K/A不产气 硫化氢+
+D.A/A不产气 硫化氢-
+E.A/A产气   硫化氢+
+答案：A
+难易程度：难
+题型：单选题
+17.埃希菌属MIU试验反应模式是
+A.++-
+B.+--
+C.-++
+D.---
+E.+-+
+答案：A
+难易程度：中
+题型：单选题
+18.沙门菌属MIU试验反应模式是
+A.++-
+B.+--
+C.-++
+D.---
+E.+-+
+答案：B
+难易程度：中
+题型：单选题
+19.志贺菌属MIU试验反应模式是
+A.++-
+B.+--
+C.-++
+D.---
+E.+-+
+答案：D
+难易程度：中
+题型：单选题
+两端钝圆，两极浓染，在陈旧培养基上形成多形性的是
+A.大肠埃希菌
+B.肺炎克雷白菌
+C.变形杆菌
+D.伤寒沙门菌
+E.鼠疫耶尔森菌
+答案：E
+难易程度：易
+题型：单选题
+1.鉴定真菌最常用的简便方法是
+A.革兰染色后镜检
+B.动物接种
+C.血清学鉴定
+D.皮肤变态反应
+E.直接镜检形态结构
+答案：E
+难易程度：易
+题型：单选题
+2.鉴定多细胞真菌主要应用的检查方法是
+A.革兰染色后镜检
+B.小培养检查菌丝和孢子
+C.血清学检查
+D.生化反应检查
+E.墨汁负染后镜检
+答案：B
+难易程度：易
+题型：单选题
+3.能使白假丝酵母菌长出厚膜孢子的培养基是
+A.普通琼脂培养基
+B.血琼脂培养基
+C.含胱氨酸的血琼脂培养基
+D.玉米粉培养基
+E.沙保罗培养基
+答案：D
+难易程度：易
+题型：单选题
+4.鉴别真菌通常以下列何种培养基上形成的菌落形态为准
+A.固体培养基
+B.改良罗氏培养基
+C.沙保罗培养基
+D.液体培养基
+E.半固体培养基
+答案：C
+难易程度：易
+题型：单选题
+5.观察白假丝酵母菌的厚膜孢子常用的培养基是
+A.尿素琼脂
+B.放线菌酮-氯霉素琼脂
+C.马铃薯葡萄糖琼脂
+D.玉米粉聚山梨酯-80琼脂
+E.心脑浸液葡萄糖血琼脂
+答案：D
+难易程度：易
+题型：单选题
+6.用生化反应鉴别红色癣菌和石膏样癣菌，所用的培养基是
+A.尿素琼脂
+B.放线菌酮-氯霉素琼脂
+C.马铃薯葡萄糖琼脂
+D.玉米粉聚山梨酯-80琼脂
+E.心脑浸液葡萄糖血琼脂
+答案：A
+难易程度：中
+题型：单选题
+7.用于观察真菌菌落色素，真菌鉴别的培养基是
+A.尿素琼脂
+B.放线菌酮-氯霉素琼脂
+C.马铃薯葡萄糖琼脂
+D.玉米粉聚山梨酯-80琼脂
+E.心脑浸液葡萄糖血琼脂
+答案：C
+难易程度：中
+题型：单选题
+用于深部真菌培养的培养基是
+A.尿素琼脂
+B.放线菌酮-氯霉素琼脂
+C.马铃薯葡萄糖琼脂
+D.玉米粉聚山梨酯-80琼脂
+E.心脑浸液葡萄糖血琼脂
+答案：E
+难易程度：中
+题型：单选题
+1.L型菌与支原体的区别是
+A.形态多形性
+B.对低渗敏感
+C.“荷包蛋”样菌落
+D.返祖现象
+E.可通过滤菌器
+答案：D
+难易程度：易
+题型：单选题
+2.菌落呈“油煎蛋”样的病原体是
+A.肺炎链球菌
+B.肺炎支原体
+C.结核分枝杆菌
+D.嗜肺军团菌
+E.衣氏放线菌
+答案：B
+难易程度：易
+题型：单选题
+3.能在无生命培养基中生长的最小原核微生物是
+A.病毒
+B.支原体
+C.立克次体
+D.衣原体
+E.细菌
+答案：B
+难易程度：易
+题型：单选题
+4.可以辅助诊断支原体肺炎的是
+A.肥达试验
+B.冷凝集试验
+C.抗" O"试验
+D.结核菌素试验
+E.外斐试验
+答案：B
+难易程度：易
+题型：单选题
+5.与泌尿生殖道感染无关的微生物是
+A.沙眼衣原体
+B.生殖支原体
+C.穿透支原体
+D.人型支原体
+E.解脲脲原体
+答案：C
+难易程度：易
+题型：单选题
+6.解脲脲原体可使尿素培养基的颜色变为
+A.黄色
+B.紫色
+C.蓝色
+D.绿色
+E.红色
+答案：E
+难易程度：易
+题型：单选题
+1.由SARS冠状病毒引起的疾病是
+A.严重急性呼吸系统综合征
+B.溃疡性结肠炎
+C.大叶性肺炎
+D.流感
+E.普通感冒
+答案：A
+难易程度：易
+题型：单选题
+2.普通冠状病毒主要引起
+A.腹泻
+B.普通感冒
+C.哮喘
+D.大叶性肺炎
+E.原发性非典型肺炎
+答案：B
+难易程度：易
+题型：单选题
+3.感染后易引起胎儿畸形的病毒是
+A.流感病毒
+B.ECHO病毒
+C.风疹病毒
+D.疱疹病毒
+E.麻疹病毒
+答案：C
+难易程度：易
+题型：单选题
+4.引起严重急性呼吸综合征的病毒是
+A.流感病毒
+B.风疹病毒
+C.腮腺炎病毒
+D.麻疹病毒
+E.SARS冠状病毒
+答案：E
+难易程度：易
+题型：单选题
+5.腮腺炎患者可出现的常见并发症是
+A.脑膜炎
+B.肺炎
+C.肝炎
+D.肾炎
+E.睾丸炎或卵巢炎
+答案：E
+难易程度：易
+题型：单选题
+6.与流感病毒发生变异有关的结构是
+A.核糖核蛋白
+B.RNA聚合酶
+C.核蛋白
+D.膜蛋白
+E.血凝素、神经氨酸酶
+答案：E
+难易程度：易
+题型：单选题
+7.流感病毒在细胞内增殖的检测指标通常是
+A.CPE
+B.红细胞凝集或吸附试验
+C.蚀斑测定
+D.干扰现象
+E.包涵体
+答案：B
+难易程度：易
+题型：单选题
+8.亚急性硬化性全脑炎(SSPE)是一种由
+A.脊髓灰质炎病毒引起的亚急性感染
+B.麻疹病毒引起的潜伏感染
+C.麻疹病毒引起的慢发病毒感染
+D.狂犬病毒引起的慢性感染
+E.流行性乙型脑炎病毒引起的急性感染
+答案：C
+难易程度：易
+题型：单选题
+9.易发生再次感染的呼吸道病毒是
+A.腺病毒
+B.流感病毒
+C.副流感病毒
+D.麻疹病毒
+E.鼻病毒
+答案：C
+难易程度：易
+题型：单选题
+最容易发生抗原变异的病毒是
+A.流感病毒
+B.腮腺炎病毒
+C.麻疹病毒
+E.SARS病毒
+D.风疹病毒
+答案：A
+难易程度：易
+题型：单选题
+1.下列属于有包膜DNA病毒的是
+A.脊髓灰质炎病毒
+B.流感病毒
+C.人类免疫缺陷病毒
+D.人乳头瘤病毒
+E.乙型肝炎病毒
+答案：E
+难易程度：易
+题型：单选题
+2.病毒的基本结构包括
+A.核酸、包膜
+B.衣壳、包膜
+C.核酸、包膜和刺突
+D.衣壳和核酸
+E.核衣壳和包膜
+答案：D
+难易程度：易
+题型：单选题
+3.病毒体的主要组成是
+A.核酸
+B.核衣壳
+C.壳粒
+D.衣壳
+E.包膜
+答案：B
+难易程度：易
+题型：单选题
+4.缺陷病毒本质是指
+A.衣壳缺损
+B.包膜刺突缺损
+C.基因组缺损
+D.复制周期不完全
+E.病毒酶缺损
+答案：C
+难易程度：易
+题型：单选题
+5.保护病毒核酸的结构是
+A.衣壳
+B.核酸
+C.包膜
+D.核衣壳
+E.壳粒
+答案：A
+难易程度：易
+题型：单选题
+6.含有宿主细胞成分的是
+A.衣壳
+B.核酸
+C.包膜
+D.核衣壳
+E.壳粒
+答案：C
+难易程度：易
+题型：单选题
+7.病毒衣壳不具有的作用是
+A.保护核酸
+B.吸附易感细胞
+C.构成其特异性抗原
+D.本身具有传染性
+E.鉴别和分类的依据
+答案：C
+难易程度：易
+题型：单选题
+8.判断病毒有无包膜的依据是
+A.培养有无细胞病变
+B.对酚类是否敏感
+C.沉降系数不同
+D.对乙醚是否敏感
+E.对酸敏感
+答案：D
+难易程度：易
+题型：单选题
+1.能引起婴幼儿鹅口疮的真菌是
+A.皮肤丝状菌
+B.新型隐球菌
+C.荚膜组织胞浆菌
+D.白假丝酵母菌
+E.着色芽生菌
+答案：D
+难易程度：易
+题型：单选题
+2.脑脊液墨汁染色直接镜检，新型隐球菌特征性的形态是
+A.细菌呈圆形或卵圆形
+B.有芽生的子细胞
+C.细胞壁厚
+D.有菌丝和假菌丝
+E.菌体周围有一宽厚的荚膜
+答案：E
+难易程度：易
+题型：单选题
+3.鉴定白假丝酵母菌最有意义的试验是
+A.沙保罗培养基上22℃、37℃均能生长
+B.革兰染色为阳性
+C.细胞为椭圆形
+D.血清培养3小时能形成芽管
+E.能同化葡萄糖
+答案：D
+难易程度：易
+题型：单选题
+4..形成假菌丝的孢子是
+A.厚膜孢子
+B.芽生孢子
+C.大分生孢子
+D.小分生孢子
+E.关节孢子
+答案：B
+难易程度：易
+题型：单选题
+5.新生隐球菌的致病物质是
+A.芽生孢子
+B.荚膜多糖
+C.假菌丝
+D.侵袭性酶
+E.毒素
+答案：B
+难易程度：易
+题型：单选题
+6.白假丝酵母菌常引起的疾病是
+A.癣病
+B.皮下组织感染
+C.皮肤黏膜、内脏感染
+D.真菌超敏反应性疾病
+E.真菌中毒症
+答案：C
+难易程度：易
+题型：单选题
+7.白假丝酵母菌所引起的鹅口疮多见于
+A.初生婴儿
+B.幼儿
+C.儿童
+D.青少年
+E.成人
+答案：A
+难易程度：易
+题型：单选题
+8.芽管形成实验阳性的是
+A.热带假丝酵母菌
+B.白假丝酵母菌
+C.光滑假丝酵母菌
+D.近平滑假丝酵母菌
+E.光滑球拟酵母菌
+答案：B
+难易程度：易
+题型：单选题
+9.卡氏肺孢子菌的传播途径是
+A.接触传播
+B.血液传播
+C.空气传播
+D.垂直传播
+E.性传播
+答案：C
+难易程度：易
+题型：单选题
+10.一脑膜炎患者，若疑为新生隐球菌感染，应将脑脊液离心后取沉渣涂片进行的染色镜检是
+A.Wright染色
+B.革兰染色
+C.墨汁负染色
+D.Giemsa染色
+E.斐氏染色
+答案：C
+难易程度：易
+题型：单选题
+11.一女性阴道炎患者，曾因治疗其他疾病长期使用过激素类药物。泌尿生殖道分泌物标本镜检可见有假菌丝的酵母型菌，引起该阴道炎的病原体最可能是
+A.衣原体
+B.解脲脲原体
+C.梅毒螺旋体
+D.白色念珠菌
+E.淋球菌
+答案：D
+难易程度：中
+题型：单选题
+12.在询问一已确诊为原发性肝癌患者的过程中，得知该患者有经常食用霉变的花生和玉米的历史，下列真菌中，很可能会诱发其肝癌的是
+A.毛霉菌
+B.曲霉菌
+C.皮肤癣菌
+D.孢子丝菌
+E.酵母菌
+答案：B
+难易程度：中
+题型：单选题
+1.抗HCV阳性，HCV RNA阳性，说明
+A.慢性丙型肝炎
+B.急性丙型肝炎
+C.现症丙型肝炎
+D.现症丁型肝炎
+E.慢性乙型肝炎
+答案：C
+难易程度：易
+题型：单选题
+2.属于肝炎病毒的是
+A.HIV
+B.CMV
+C.HSV
+D.EBV
+E.HAV
+答案：E
+难易程度：易
+题型：单选题
+3.患者HBsAg+、抗HBs-、HBeAg+、抗HBe一、抗HBcIgM+,表明
+A.患急性乙型肝炎
+B.患慢性乙型肝炎
+C.患慢性迁延性肝炎
+D.乙肝恢复期
+E.患慢性活动性肝炎
+答案：A
+难易程度：易
+题型：单选题
+4.属于DNA病毒的是
+A.HAV
+B.HBV
+C.HCV
+D.HDV
+E.HEV
+答案：B
+难易程度：易
+题型：单选题
+5.属于缺陷病毒的是
+A.HAV
+B.HBV
+C.HCV
+D.HDV
+E.HEV
+答案：D
+难易程度：易
+题型：单选题
+6.乙型肝炎的主要传播途径是
+A.消化道传播
+B.血液、血制品传播
+C.呼吸道传播
+D.直接接触
+E.蚊虫叮咬
+答案：B
+难易程度：易
+题型：单选题
+7.HDV的复制中，需HBV为其提供的主要物质是
+A.逆转录酶
+B.蛋白酶
+C.核蛋白
+D.外衣壳蛋白
+E.内衣壳蛋白
+答案：D
+难易程度：易
+题型：单选题
+8.HEV的传播和流行主要是通过
+A.血液、血制品传播
+B.性接触传播
+C.密切接触传播
+D.母婴传播
+E.水源或食物被粪便污染
+答案：E
+难易程度：易
+题型：单选题
+HBV感染后第一个出现的血清学标志物是
+A.HBsAg
+B.HBeAg
+C.抗HAV
+D.HBsAb
+E.HBcAg
+答案：A
+难易程度：易
+题型：单选题
+10.具有中和乙肝病毒作用的是
+A.HBsAg
+B.HBeAg
+C.抗HAV
+D.HBsAb
+E.HBcAg
+答案：D
+难易程度：易
+题型：单选题
+1.下列疾病中，主要经粪一口途径传播的是
+A.脊髓灰质炎
+B.登革热
+C.黄热病
+D.森林脑炎
+E.流行性乙型脑炎
+答案：A
+难易程度：易
+题型：单选题
+2.脊髓灰质炎活疫苗采用口服途径主要是因为
+A.最省人力
+B.最易为儿童接受
+C.免疫维持时间长
+D.既能产生血清中和抗体又能获得局部免疫
+E.不易发生干扰
+答案：D
+难易程度：易
+题型：单选题
+3.小儿麻痹的病原体是
+A.脊髓灰质炎病毒
+B.乙脑病毒
+C.单纯疱疹病毒
+D.麻疹病毒
+E.EB病毒
+答案：A
+难易程度：易
+题型：单选题
+4.脊髓灰质炎病毒的传播途径是
+A.呼吸道传播
+B.血液传播
+C.皮肤传播
+D.垂直传播
+E.消化道传播
+答案：E
+难易程度：易
+题型：单选题
+5.脊髓灰质炎病毒主要侵犯
+A.三叉神经节
+B.脑神经节
+C.脊髓前角神经细胞
+D.神经肌肉接头
+E.海马回锥体细胞
+答案：C
+难易程度：易
+题型：单选题
+6.关于柯萨奇病毒的特点，不正确的是
+A.无包膜的DNA病毒
+B.可引起脑膜炎
+C.主要以粪—口途径传播
+D.能引起人类的多种疾病
+E.有些型别具有血凝性质
+答案：A
+难易程度：易
+题型：单选题
+7.脊髓灰质炎病毒排出体外主要通过
+A.鼻分泌物
+B.眼分泌物
+C.粪便
+D.尿
+E.飞沫
+答案：C
+难易程度：易
+题型：单选题
+1.水痘-带状疱疹病毒属于
+A. α 疱疹病毒
+B. β 疱疹病毒
+C. γ 疱疹病毒
+D.癌症病毒亚科
+E. δ 疱疹病毒
+答案：A
+难易程度：易
+题型：单选题
+2.在上皮细胞胞核中形成“猫头鹰眼”样包涵体的病毒是
+A.人类巨细胞病毒
+B.人类免疫缺陷病毒
+C.麻疹病毒
+D.单纯疱疹病毒
+E.狂犬病毒
+答案：A
+难易程度：易
+题型：单选题
+3.下列与鼻咽癌病因有关的病毒是
+A.巨细胞病毒
+B.单纯疱疹病毒
+C.EB病毒
+D.鼻病毒
+E.水痘-带状疱疹病毒
+答案：C
+难易程度：易
+题型：单选题
+4.EBV主要侵犯的细胞是
+A.CD₄T细胞
+B.红细胞
+C.巨噬细胞
+D.单核细胞
+E.B细胞
+答案：E
+难易程度：易
+题型：单选题
+5.潜伏于三叉神经节的病原体是
+A.HSV-1型
+B.HSV-2型
+C.VZV
+D.HCMV
+E.EBV
+答案：A
+难易程度：易
+题型：单选题
+6.潜伏于骶神经节的病原体是
+A.HSV-1型
+B.HSV-2型
+C.VZV
+D.HCMV
+E.EBV
+答案：B
+难易程度：易
+题型：单选题
+7.孕妇感染可引起胎儿先天性畸形的病毒是
+A.流感病毒
+B.风疹病毒
+C.鼻病毒
+D.麻疹病毒
+E.冠状病毒
+答案：B
+难易程度：易
+题型：单选题
+8.与Kaposi肉瘤相关的疱疹病毒是
+A.HSV-1
+B.HSV-2
+C.HHV-8
+D.HHV-3
+E.HHV-6
+答案：C
+难易程度：易
+题型：单选题
+1.真菌细胞不具有的结构或成分是
+A.细胞壁
+B.细胞核
+C.线粒体
+D.内质网
+E.叶绿素
+答案：E
+难易程度：易
+题型：单选题
+2.真菌区别于细菌的本质特征是
+A.具有高度分化的细胞核(有核膜、核仁)
+B.有单细胞和多细胞等不同形态
+B.有多种增殖方式
+D.对抗生素不敏感
+E.细胞壁中无肽聚糖
+答案：A
+难易程度：易
+题型：单选题
+3.真菌对以下因素抵抗力最弱的是
+A.氧气
+B.60℃加热1小时
+C.青霉素
+D.氯霉素
+E.潮湿
+答案：B
+难易程度：易
+题型：单选题
+4.真菌培养的特点是
+A.营养要求高
+B.生长缓慢
+C.最适温度为37℃左右
+D.pH为7-8
+E.厌氧生长
+答案：B
+难易程度：易
+题型：单选题
+5.具有典型核结构的微生物是
+A.放线菌
+B.真菌
+C.立克次体
+D.支原体
+E.螺旋体
+答案：B
+难易程度：易
+题型：单选题
+6.医学上重要的真菌绝大部分属于
+A.半知菌亚门
+B.子囊菌亚门
+C.接合菌亚门
+D.担子菌亚门
+E.孢子菌亚门
+答案：A
+难易程度：易
+题型：单选题
+7.最常用的真菌培养基是
+A.沙保罗培养基
+B.玉米粉-吐温80培养基
+C.血琼脂
+D.SS琼脂
+E.基础琼脂
+答案：A
+难易程度：易
+题型：单选题
+1.属于逆转录病毒的是
+A.人类免疫缺陷病毒
+B.EB病毒
+C.单纯疱疹病毒
+D.乙型肝炎病毒
+E.巨细胞病毒
+答案：A
+难易程度：易
+题型：单选题
+2.AIDS的病原体是
+A.人类嗜T细胞病毒I型
+B.人类嗜T细胞病毒Ⅱ型
+C.人白血病病毒
+D.人类免疫缺陷病毒
+E.EB病毒
+答案：D
+难易程度：易
+题型：单选题
+3.HIV主要感染的细胞是
+A.CD8'T淋巴细胞
+B.中性粒细胞
+C.血管内皮细胞
+A.上皮细胞
+E.CD4'T淋巴细胞
+答案：E
+难易程度：易
+题型：单选题
+4.HIV感染确诊常用的方法是
+A.Western blot
+B.胶乳凝集试验
+C.ELISA
+D.反转录酶测定
+E.中和试验
+答案：A
+难易程度：易
+题型：单选题
+5.可用于HIV感染确诊的指标是
+A.病毒载量
+B.CD4 + T淋巴细胞计数
+C.HIV抗体确认试验
+D.P24抗原检测
+E.HIV抗体初筛试验
+答案：C
+难易程度：易
+题型：单选题
+6.人免疫缺陷病毒引起的感染类型是
+A.隐性感染
+B.潜伏感染
+C.慢性感染
+D.急性感染
+E.慢病毒感染
+答案：E
+难易程度：易
+题型：单选题
+7.HIV感染的确证试验是
+A.酶联免疫法查HIV抗体
+B.PCR法检测HIV RNA
+C.检测HIV病毒载量
+D.免疫印迹法检测HIV抗体
+E.HIV病毒分离培养
+答案：D
+难易程度：易
+题型：单选题
+8.诊断HIV感染的主要检测方法是
+A.P24抗原的检测
+B.HIV抗体的检测
+C.HIV核酸的检测
+D.病毒的分离培养
+E.HIV病毒载量检测
+答案：B
+难易程度：易
+题型：单选题
+9.HIV P24抗原检测常用的方法是
+A.免疫荧光法
+B.酶联免疫法
+C.免疫沉淀法
+D.免疫印迹法
+E.凝集法
+答案：B
+难易程度：易
+题型：单选题
+EB病毒感染的靶细胞是
+A.B淋巴细胞
+B.CD4*T淋巴细胞
+C.大脑海马回锥体细胞
+D.皮肤黏膜上皮细胞
+E.肝脏细胞
+答案：A
+难易程度：易
+题型：单选题
+1.哪种细菌可出现MRS
+A.葡萄球菌
+B.肠球菌
+C.埃希菌
+D.链球菌
+E.奈瑟菌
+答案：A
+难易程度：易
+题型：单选题
+2.MRS与细菌的何种性状相关
+A.形态
+B.菌落
+C.耐药
+D.毒力
+E.鞭毛
+答案：C
+难易程度：易
+题型：单选题
+3.鉴定致病性葡萄球菌的最佳试验是
+A.凝固酶试验
+B.DNA酶试验
+C.甘露糖试验
+D.PRY试验
+E.磷酸酶试验
+答案：A
+难易程度：易
+题型：单选题
+4.可鉴别表皮葡萄球菌与金黄色葡萄球菌的试验是
+A.乳糖发酵试验
+B.甘露糖发酵试验
+C.触酶试验
+D.耐热核酸酶试验
+E.新生霉素试验
+答案：D
+难易程度：易
+题型：单选题
+5.对温度最敏感的细菌是
+A.脑膜炎奈瑟菌
+B.金黄奈瑟菌
+C.卡他莫拉菌
+D.金黄色葡萄球菌
+E.表皮葡萄球菌
+答案：A
+难易程度：易
+题型：单选题
+6.DNA酶试验阳性的细菌是
+A.金黄色葡萄球菌
+B.表皮葡萄球菌
+C.肺炎链球菌
+D.脑膜炎奈瑟菌
+E.淋病奈瑟菌
+答案：A
+难易程度：中
+题型：单选题
+7.鉴别葡萄球菌属和链球菌属应选择
+A.杆菌肽试验
+B.CAMP试验
+C.胆汁七叶苷试验
+D.氧化酶试验
+E.触酶试验
+答案：E
+难易程度：易
+题型：单选题
+8.下列病原菌中，最常引起新生儿败血症的是
+A.金黄色葡萄球菌
+B.A群链球菌
+C.B群链球菌
+D.甲型溶血性链球菌
+E.白喉棒状杆菌
+答案：C
+难易程度：易
+题型：单选题
+9.辅助诊断风湿热的试验是
+A.抗“O”试验
+B.冷凝集试验
+C.肥达试验
+D.PYR试验
+E.外斐试验
+答案：A
+难易程度：易
+题型：单选题
+10.氧化酶和触酶试验均阳性的细菌是
+A.葡萄球菌
+B.链球菌
+C.肠球菌
+D.卡他莫拉菌
+E.大肠埃希菌
+答案：D
+难易程度：易
+题型：单选题
+11.含D群链球菌抗原且耐受高盐的细菌是
+A.表皮葡萄球菌
+B.粪肠球菌
+C.牛链球菌
+D.草绿色链球菌
+E.肺炎链球菌
+答案：B
+难易程度：易
+题型：单选题
+12.初次分离须置5%CO₂环境才能生长的是
+A.表皮葡萄球菌
+B.粪肠球菌
+C.肺炎链球菌
+D.卡他莫拉菌
+E.路登葡萄球菌
+答案：C
+难易程度：中
+题型：单选题
+13.培养48小时后菌落呈脐窝状凹陷的是
+A.肺炎链球菌
+B.草绿色链球菌
+C.粪肠球菌
+D.淋病奈瑟菌
+E.脑膜炎奈瑟菌
+答案：A
+难易程度：中
+题型：单选题
+14.胆汁溶菌试验阳性的细菌是
+A.粪肠球菌
+B.屎肠球菌
+C.牛链球菌
+D.草绿色链球菌
+E.肺炎链球菌
+答案：E
+难易程度：中
+题型：单选题
+15.CAMP试验阳性的细菌是
+A.肠球菌
+B.A群链球菌
+C.无乳链球菌
+D.肺炎链球菌
+E.葡萄球菌
+答案：C
+难易程度：易
+题型：单选题
+16.PYR试验阳性的细菌是
+A.化脓性链球菌
+B.米勒链球菌
+C.无乳链球菌
+D.咽喉炎链球菌
+E.金黄色葡萄球菌
+答案：A
+难易程度：易
+题型：单选题
+17.脑膜炎奈瑟菌的分解情况是
+A.只分解葡萄糖
+B.只分解乳糖
+C.只分解麦芽糖
+A.分解葡萄糖和乳糖
+E.分解葡萄糖和麦芽糖
+答案：E
+难易程度：中
+题型：单选题
+18.菌落干燥坚硬且有整体推移感的细菌是
+A.黏膜奈瑟菌
+B.干燥奈瑟菌
+C.淋病奈瑟菌
+D.卡他莫拉菌
+E.米勒链球菌
+答案：D
+难易程度：中
+题型：单选题
+19.可鉴别牛链球菌和草绿色链球菌的是
+A.触酶试验
+B.杆菌肽敏感试验
+C.胆汁七叶苷试验
+D.胆汁溶菌试验
+E.65g/L NaCl生长试验
+答案：C
+难易程度：中
+题型：单选题
+20.患儿，男，9岁。金黄色葡萄球菌引起的腿部蜂窝组织炎，2天后出现败血症，并扩散至其他组织，产生新的化脓病灶。患儿感染的类型是
+A.毒血症
+B.内毒素血症
+C.败血症
+D.脓毒血症
+E.菌血症
+答案：D
+难易程度：难
+题型：单选题
+1.不属于原核细胞型微生物的是
+A.细菌
+B.真菌
+C.衣原体
+D.支原体
+E.螺旋体
+答案：B
+难易程度：易
+题型：单选题
+2.真核细胞型微生物的特点不包括
+A.都是单细胞生物
+B.有典型细胞核
+C.细胞质中细胞器完整
+D.可在人工配制的培养基上生长繁殖
+E.有细胞的基本结构
+答案：A
+难易程度：易
+题型：单选题
+3.观察细菌形态和动力可以用悬滴法或压滴法，此二者用的染色方法是
+A.单染法
+B.复染法
+C.不染色
+D.革兰染色
+E.Wright染色
+答案：C
+难易程度：易
+题型：单选题
+4.结晶紫染料属于
+A.多色染料
+B.酸性染料
+C.碱性染料
+D.中性染料
+E.病理切片染料
+答案：C
+难易程度：易
+题型：单选题
+5.与基础培养基相比，营养培养基添加的成分是
+A.水
+B.氯化钠
+C.尿素
+D.血液
+E.蛋白胨
+答案：D
+难易程度：易
+题型：单选题
+6.大多数细菌生长繁殖适宜的pH是
+A.pH 3.0～3.6
+B.pH 5.0～5.6
+C.pH 7.2～7.6
+D.pH 8.0～8.6
+E.pH 9.0～9.6
+答案：C
+难易程度：中
+题型：单选题
+7.细菌染色标本制作的基本程序是
+A.涂片一染色一干燥—固定
+B.涂片一染色一固定一干燥
+C.涂片一干燥—固定一染色
+A.涂片一固定一染色一干燥
+E.涂片一固定一干燥—染色
+答案：C
+难易程度：易
+题型：单选题
+8.观察细菌内部超微结构选用
+A.相差显微镜
+B.电子显微镜
+C.荧光显微镜
+D.暗视野显微镜
+E.普通光学显微镜
+答案：B
+难易程度：易
+题型：单选题
+9.双糖铁培养基属于
+A.基础培养基
+B.鉴别培养基
+C.营养培养基
+D.选择培养基
+E.特殊培养基
+答案：B
+难易程度：易
+题型：单选题
+10.革兰染色中，革兰阴性菌染成
+A.红色
+B.紫色
+C.蓝色
+D.黄色
+E.白色
+答案：A
+难易程度：易
+题型：单选题
+11.抗酸染色中，抗酸性细菌染成
+A.红色
+B.紫色
+C.蓝色
+D.黄色
+E.白色
+答案：A
+难易程度：易
+题型：单选题
+12.用于快速鉴定迟缓发酵乳糖菌株的试验是
+A.ONPG试验
+B.CAMP试验
+C.MIU试验
+D.O/F试验
+E.V-P试验
+答案：A
+难易程度：中
+题型：单选题
+13.ONPG试验主要利用迟缓发酵乳糖的菌株缺乏
+A.β-半乳糖苷酶
+B.半乳糖苷渗透酶
+C.乳糖脱氢酶
+D.半乳糖酶
+E.乳糖渗透酶
+答案：B
+难易程度：中
+题型：单选题
+14.平板划线的主要目的是
+A.有利于细菌生长
+B.纯培养
+C.保存菌种
+D.分离出单个菌落
+E.计数细菌
+答案：D
+难易程度：易
+题型：单选题
+15.平板划线的主要目的是
+A.有利于细菌生长
+B.纯培养
+C.保存菌种
+D.分离出单个菌落
+E.计数细菌
+答案：D
+难易程度：易
+题型：单选题
+16.利用生化反应鉴定细菌是依据
+A.细菌酶活性差异
+B.细菌毒素活性差异
+C.细菌酶含量差异
+D.细菌毒素种类的差异
+E.细菌分解代谢产物的差异
+答案：E
+难易程度：易
+题型：单选题
+17.IMViC试验常用来鉴定
+A.革兰阴性球菌
+B.肠道杆菌
+C.非发酵菌
+D.革兰阳性杆菌
+E.厌氧菌
+答案：B
+难易程度：中
+题型：单选题
+18.KIA琼脂一般不用于观察细菌的
+A.动力
+B.葡萄糖发酵
+C.乳糖发酵
+D.分解葡萄糖产气
+E.产硫化氢
+答案：A
+难易程度：中
+题型：单选题
+19.含有胆盐、煌绿的培养基是
+A.基础培养基
+B.营养培养基
+C.选择培养基
+D.鉴别培养基
+E.厌氧培养基
+答案：C
+难易程度：难
+题型：单选题
+20.属于呼吸酶试验的是
+A.吲哚试验
+B.杆菌肽试验
+C.硫化氢试验
+D.硝酸盐还原试验
+E.明胶液化试验
+答案：D
+难易程度：难
+题型：单选题
+    </script>
+
+    <script>
+        // 核心运行状态管理
+        let state = {
+            allQuestions: [],       // 所有解析出来的原始题目
+            filteredQuestions: [],   // 当前筛选模式下的可见题目
+            currentIdx: 0,          // 卡片模式下当前可见的数组索引
+            currentMode: 'card',     // 'card' 或 'paper'
+            showOnlyWrong: false,   // 错题本激活标记
+            selectedChapter: 'all', // 当前章节筛选
+            userAnswers: {},        // 用户答案映射字典 {qId: answer}
+            wrongList: []           // 错题留存库 [qId, qId]
+        };
+
+        // 页面入口函数
+        window.onload = function() {
+            initTheme();
+            parseDatabase();
+            loadProgress();
+            populateChapterFilter();
+            applyFilters();
+            setupKeyboardShortcuts();
+        };
+
+        // 1. 高级数据解析核心引擎
+        function parseDatabase() {
+            const rawText = document.getElementById('raw-data-source').textContent;
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            
+            let questions = [];
+            let currentItem = null;
+            let chapterCounter = 0;
+            let lastNum = 0;
+
+            lines.forEach(line => {
+                const qMatch = line.match(/^(\d+)\.(.*)/);
+                const optMatch = line.match(/^([A-E])[\.、\s]?(.*)/);
+                const ansMatch = line.match(/^答案[：\s:]*([A-E])/i);
+
+                if (qMatch) {
+                    const num = parseInt(qMatch[1]);
+                    if (num === 1 || num < lastNum) {
+                        chapterCounter++;
+                    }
+                    lastNum = num;
+
+                    if (currentItem) questions.push(currentItem);
+                    currentItem = createNewQuestionObj(questions.length + 1, chapterCounter, qMatch[2]);
+                } else if (optMatch && currentItem) {
+                    currentItem.options.push({ key: optMatch[1], text: line });
+                } else if (ansMatch && currentItem) {
+                    currentItem.answer = ansMatch[1].toUpperCase();
+                } else if (line.includes('难易程度') || line.includes('题型')) {
+                    // 跳过元数据行
+                } else {
+                    // 处理无题号段落（如：霍乱弧菌增菌培养时选用）
+                    if (currentItem && (currentItem.options.length > 0 || currentItem.answer)) {
+                        questions.push(currentItem);
+                        currentItem = createNewQuestionObj(questions.length + 1, chapterCounter, line);
+                    } else if (currentItem) {
+                        currentItem.title += " " + line;
+                    }
+                }
+            });
+            if (currentItem) questions.push(currentItem);
+            state.allQuestions = questions;
+        }
+
+        function createNewQuestionObj(id, chNum, titleText) {
+            return {
+                id: id,
+                chapter: `第 ${chNum} 部分`,
+                title: titleText,
+                options: [],
+                answer: ''
+            };
+        }
+
+        // 2. 章节智能联动渲染
+        function populateChapterFilter() {
+            const select = document.getElementById('chapter-filter');
+            const chapters = [...new Set(state.allQuestions.map(q => q.chapter))];
+            chapters.forEach(ch => {
+                const opt = document.createElement('option');
+                opt.value = ch;
+                opt.textContent = ch;
+                select.appendChild(opt);
+            });
+        }
+
+        // 3. 核心大过滤器（核心消灭错题机制）
+        function applyFilters() {
+            state.filteredQuestions = state.allQuestions.filter(q => {
+                const matchChapter = (state.selectedChapter === 'all' || q.chapter === state.selectedChapter);
+                const matchWrong = (!state.showOnlyWrong || state.wrongList.includes(q.id));
+                return matchChapter && matchWrong;
+            });
+
+            // 越界保护检查
+            if (state.currentIdx >= state.filteredQuestions.length) {
+                state.currentIdx = Math.max(0, state.filteredQuestions.length - 1);
+            }
+
+            renderInterface();
+        }
+
+        // 4. 界面综合渲染管线
+        function renderInterface() {
+            updateDashboardMetrics();
+            renderNavigationGrid();
+
+            const hasData = state.filteredQuestions.length > 0;
+            document.getElementById('empty-state').style.display = hasData ? 'none' : 'block';
+            document.getElementById('container-card-mode').style.display = (hasData && state.currentMode === 'card') ? 'block' : 'none';
+            document.getElementById('container-paper-mode').style.display = (hasData && state.currentMode === 'paper') ? 'block' : 'none';
+
+            if (!hasData) return;
+
+            if (state.currentMode === 'card') {
+                renderCardView();
+            } else {
+                renderPaperView();
+            }
+        }
+
+        // 卡片渲染视图
+        function renderCardView() {
+            const q = state.filteredQuestions[state.currentIdx];
+            document.getElementById('card-chapter').textContent = `${q.chapter} • 题号 ID: ${q.id}`;
+            document.getElementById('card-question-title').textContent = q.title;
+            document.getElementById('card-index-indicator').textContent = `${state.currentIdx + 1} / ${state.filteredQuestions.length}`;
+
+            const optionsContainer = document.getElementById('card-options');
+            optionsContainer.innerHTML = '';
+
+            const userAns = state.userAnswers[q.id];
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 rounded-xl border font-medium transition-all flex items-center justify-between group ${getOptionStyleClass(opt.key, userAns, q.answer)}`;
+                btn.onclick = () => handleSelectOption(q.id, opt.key);
+                btn.innerHTML = `<span>${opt.text}</span><span class="opacity-0 group-hover:opacity-100 text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded">${opt.key}</span>`;
+                optionsContainer.appendChild(btn);
+            });
+
+            // 错题解析区动态展示
+            const cardAnalysis = document.getElementById('card-analysis');
+            if (userAns) {
+                cardAnalysis.classList.remove('hidden');
+                document.getElementById('card-correct-answer').textContent = q.answer;
+                const isCorrect = userAns === q.answer;
+                document.getElementById('analysis-status-icon').textContent = isCorrect ? '✅' : '❌';
+                document.getElementById('analysis-status-text').textContent = isCorrect ? '回答正确！自动移出或通过消灭机制' : '回答错误。系统已自动拦截进错题本';
+                document.getElementById('analysis-status-text').className = isCorrect ? 'text-emerald-500 font-bold text-sm' : 'text-rose-500 font-bold text-sm';
+            } else {
+                cardAnalysis.classList.add('hidden');
+            }
+        }
+
+        // 整卷全览渲染视图
+        function renderPaperView() {
+            const container = document.getElementById('container-paper-mode');
+            container.innerHTML = '';
+
+            state.filteredQuestions.forEach((q, loopIdx) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm transition-all";
+                
+                const userAns = state.userAnswers[q.id];
+
+                let optionsHtml = '';
+                q.options.forEach(opt => {
+                    optionsHtml += `
+                        <button onclick="handleSelectOption(${q.id}, '${opt.key}')" class="w-full text-left p-3 rounded-lg border text-sm font-medium transition-all flex justify-between items-center ${getOptionStyleClass(opt.key, userAns, q.answer)}">
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                let analysisHtml = userAns ? `
+                    <div class="mt-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl text-xs border border-slate-100 dark:border-slate-800">
+                        <span class="${userAns === q.answer ? 'text-emerald-500' : 'text-rose-500'} font-bold">${userAns === q.answer ? '✅ 正确' : '❌ 错误'}</span> 
+                        • 核心解析答案: <span class="text-emerald-500 font-black">${q.answer}</span>
+                    </div>
+                ` : '';
+
+                itemDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-semibold text-slate-400">${q.chapter} #题号:${q.id}</span>
+                    </div>
+                    <h4 class="font-bold text-base mb-4 leading-relaxed">${loopIdx + 1}. ${q.title}</h4>
+                    <div class="space-y-2">${optionsHtml}</div>
+                    ${analysisHtml}
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        // 动态计算样式判定辅助
+        function getOptionStyleClass(currentKey, userAns, correctAns) {
+            if (!userAns) return 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900';
+            if (currentKey === correctAns) return 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-600 dark:text-emerald-400';
+            if (currentKey === userAns && userAns !== correctAns) return 'bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-500';
+            return 'border-slate-100 dark:border-slate-900 opacity-60';
+        }
+
+        // 5. 交互交互处理机制核心（答错拦截 / 答对消灭）
+        function handleSelectOption(qId, selectedOpt) {
+            const q = state.allQuestions.find(item => item.id === qId);
+            if (!q) return;
+
+            // 记录答案
+            state.userAnswers[qId] = selectedOpt;
+
+            if (selectedOpt === q.answer) {
+                // 答对自动消灭机制
+                state.wrongList = state.wrongList.filter(id => id !== qId);
+            } else {
+                // 智能做错拦截
+                if (!state.wrongList.includes(qId)) {
+                    state.wrongList.push(qId);
+                }
+            }
+
+            saveProgress();
+            
+            // 局部流畅刷新动效渲染
+            if (state.currentMode === 'card') {
+                renderCardView();
+                updateDashboardMetrics();
+                renderNavigationGrid();
+            } else {
+                renderInterface();
+            }
+        }
+
+        // 6. 数据监控仪表盘刷新
+        function updateDashboardMetrics() {
+            const totalScope = state.allQuestions.length;
+            const answeredScope = state.allQuestions.filter(q => state.userAnswers[q.id]).length;
+            const correctScope = state.allQuestions.filter(q => state.userAnswers[q.id] === q.answer).length;
+            
+            // 基础面板数据
+            document.getElementById('stat-total').textContent = totalScope;
+            document.getElementById('stat-answered').textContent = answeredScope;
+            document.getElementById('stat-correct').textContent = correctScope;
+            document.getElementById('stat-wrong').textContent = state.wrongList.length;
+            document.getElementById('wrong-badge').textContent = state.wrongList.length;
+
+            // 筛选标题组及进度条更新
+            document.getElementById('scope-title').textContent = state.showOnlyWrong ? "错题集中冲刺进度" : (state.selectedChapter === 'all' ? "全局测试进度" : state.selectedChapter);
+            
+            const activeTotal = state.filteredQuestions.length;
+            const activeAnswered = state.filteredQuestions.filter(q => state.userAnswers[q.id]).length;
+            document.getElementById('progress-text').textContent = `${activeAnswered} / ${activeTotal}`;
+            
+            const progressPercent = activeTotal > 0 ? (activeAnswered / activeTotal) * 100 : 0;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            const accuracy = answeredScope > 0 ? Math.round((correctScope / answeredScope) * 100) : 0;
+            document.getElementById('accuracy-text').textContent = `${accuracy}%`;
+        }
+
+        // 7. 渲染矩阵与导航跳转
+        function renderNavigationGrid() {
+            const grid = document.getElementById('matrix-grid');
+            grid.innerHTML = '';
+
+            state.filteredQuestions.forEach((q, loopIdx) => {
+                const cell = document.createElement('button');
+                const userAns = state.userAnswers[q.id];
+                
+                let btnStyle = "bg-slate-100 dark:bg-slate-800 text-slate-400"; // 未答
+                if (userAns) {
+                    btnStyle = (userAns === q.answer) 
+                        ? "bg-emerald-500 text-white font-bold" 
+                        : "bg-rose-500 text-white font-bold";
+                }
+
+                if (state.currentMode === 'card' && loopIdx === state.currentIdx) {
+                    cell.className = `p-2 text-xs rounded-lg border-2 border-blue-500 focus:outline-none transition-all ring-2 ring-blue-400 ${btnStyle}`;
+                } else {
+                    cell.className = `p-2 text-xs rounded-lg hover:scale-105 transition-all ${btnStyle}`;
+                }
+
+                cell.textContent = q.id;
+                cell.onclick = () => jumpToQuestion(loopIdx);
+                grid.appendChild(cell);
+            });
+        }
+
+        function jumpToQuestion(index) {
+            state.currentIdx = index;
+            if (state.currentMode === 'paper') {
+                // 如果是整卷模式，跳转改为高亮平滑滚动效果
+                switchMode('card');
+            }
+            renderInterface();
+        }
+
+        // 8. 模式及高级过滤器控制流
+        function switchMode(mode) {
+            state.currentMode = mode;
+            document.getElementById('btn-mode-card').className = mode === 'card' 
+                ? "px-3 py-1.5 rounded-lg font-medium transition-all bg-white dark:bg-slate-700 shadow-sm text-blue-500"
+                : "px-3 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-slate-600";
+            document.getElementById('btn-mode-paper').className = mode === 'paper' 
+                ? "px-3 py-1.5 rounded-lg font-medium transition-all bg-white dark:bg-slate-700 shadow-sm text-blue-500"
+                : "px-3 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-slate-600";
+            renderInterface();
+        }
+
+        function toggleWrongNotebook() {
+            state.showOnlyWrong = !state.showOnlyWrong;
+            const btn = document.getElementById('btn-wrong-notebook');
+            if (state.showOnlyWrong) {
+                btn.classList.add('bg-rose-50', 'border-rose-300', 'text-rose-600', 'dark:bg-rose-950/40');
+            } else {
+                btn.className = "px-3 py-2 rounded-xl font-medium border transition-all flex items-center space-x-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-red-500";
+            }
+            state.currentIdx = 0;
+            applyFilters();
+        }
+
+        function handleChapterFilter(chapterValue) {
+            state.selectedChapter = chapterValue;
+            state.currentIdx = 0;
+            applyFilters();
+        }
+
+        function clearAllFilters() {
+            state.selectedChapter = 'all';
+            state.showOnlyWrong = false;
+            document.getElementById('chapter-filter').value = 'all';
+            const btn = document.getElementById('btn-wrong-notebook');
+            btn.className = "px-3 py-2 rounded-xl font-medium border transition-all flex items-center space-x-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-red-500";
+            applyFilters();
+        }
+
+        // 重置当前显示范围的题目的解答状态
+        function resetCurrentScope() {
+            if (confirm("确定要清空当前显示范围内的做题进度吗？此操作不可逆！")) {
+                state.filteredQuestions.forEach(q => {
+                    delete state.userAnswers[q.id];
+                    state.wrongList = state.wrongList.filter(id => id !== q.id);
+                });
+                saveProgress();
+                applyFilters();
+            }
+        }
+
+        // 9. 桌面端全键盘快捷操作控题流
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (state.currentMode !== 'card' || state.filteredQuestions.length === 0) return;
+                
+                const key = e.key.toUpperCase();
+                // 映射 A-E 键答题
+                if (['A', 'B', 'C', 'D', 'E'].includes(key)) {
+                    const activeQ = state.filteredQuestions[state.currentIdx];
+                    if (activeQ && activeQ.options.some(opt => opt.key === key)) {
+                        handleSelectOption(activeQ.id, key);
+                    }
+                }
+                // 键盘方向键控制翻页
+                if (e.key === 'ArrowLeft') {
+                    prevCard();
+                }
+                if (e.key === 'ArrowRight') {
+                    nextCard();
+                }
+            });
+        }
+
+        function prevCard() {
+            if (state.currentIdx > 0) {
+                state.currentIdx--;
+                renderCardView();
+                renderNavigationGrid();
+            }
+        }
+
+        function nextCard() {
+            if (state.currentIdx < state.filteredQuestions.length - 1) {
+                state.currentIdx++;
+                renderCardView();
+                renderNavigationGrid();
+            }
+        }
+
+        // 10. LocalStorage 离线数据读写
+        function saveProgress() {
+            localStorage.setItem('med_quiz_answers', JSON.stringify(state.userAnswers));
+            localStorage.setItem('med_quiz_wrong', JSON.stringify(state.wrongList));
+        }
+
+        function loadProgress() {
+            const cachedAnswers = localStorage.getItem('med_quiz_answers');
+            const cachedWrong = localStorage.getItem('med_quiz_wrong');
+            if (cachedAnswers) state.userAnswers = JSON.parse(cachedAnswers);
+            if (cachedWrong) state.wrongList = JSON.parse(cachedWrong);
+        }
+
+        function factoryReset() {
+            if (confirm("警告：这将永久删除所有的刷题记录、错题留存并恢复至初始出厂状态，确定继续吗？")) {
+                localStorage.clear();
+                state.userAnswers = {};
+                state.wrongList = [];
+                clearAllFilters();
+            }
+        }
+
+        // 11. 深色模式智能化环境适配切换
+        function initTheme() {
+            if (localStorage.getItem('dark-mode') === 'true' || 
+                (!('dark-mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            switchMode('card');
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('dark-mode', isDark);
+        }
+    </script>
+</body>
+</html>
